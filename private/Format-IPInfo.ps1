@@ -7,10 +7,10 @@ function Format-IPInfo {
 
     $table = @()
     foreach ($ip in $IPInfo) {
-        $interface = if ([string]::IsNullOrEmpty($ip.Interface)) { "<未知接口>" } else { $ip.Interface }
+        $interface = if ([string]::IsNullOrEmpty($ip.Interface)) { "<Unknown Interface>" } else { $ip.Interface }
         $table += [PSCustomObject]@{
-            "网络接口" = $interface
-            "IP地址" = $ip.IPAddress
+            "Interface" = $interface
+            "IPAddress" = $ip.IPAddress
         }
     }
 
@@ -19,11 +19,11 @@ function Format-IPInfo {
         'WLAN' = 1
         '以太网' = 2
         'vEthernet (Default Switch)' = 3
-        '<未知接口>' = 5
+        '<Unknown Interface>' = 5
     }
 
     $table | Sort-Object {
-        $interface = $_.'网络接口'
+        $interface = $_.'Interface'
         if ($sortOrder.ContainsKey($interface)) {
             $sortOrder[$interface]
         }

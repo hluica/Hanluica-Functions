@@ -60,7 +60,7 @@ function Set-WindowsAppsAcl {
 
         $tiSidObject = [System.Security.Principal.SecurityIdentifier]$trustedInstallerSid
         $tiAccount = $tiSidObject.Translate([System.Security.Principal.NTAccount])
-        Write-Host "ℹ️ 目标所有者: $($tiAccount.Value)`n   SID: $trustedInstallerSid)" -ForegroundColor Blue
+        Write-Host "ℹ️ Current target owner: $($tiAccount.Value)`n   SID: $trustedInstallerSid)" -ForegroundColor Blue
 
         $adminsGroup = [System.Security.Principal.NTAccount]"BUILTIN\Administrators"
         $adminsSid = $adminsGroup.Translate([System.Security.Principal.SecurityIdentifier])

@@ -39,7 +39,8 @@ Edit-Pictures -linear
 Sets PPI values for all images based on their width using a linear calculation.
 .NOTES
 Alias: ma
-Requires ImageSharpProcessorLib for image processing operations.
+Requires ImageSharpProcessorLib for image processing operations, and .NET 9 for supporting the library.
+The library is included in the Module, but .NET runtime isn't.
 .LINK
 https://github.com/Hanluica-Functions
 #>

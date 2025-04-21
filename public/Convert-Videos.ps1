@@ -64,7 +64,7 @@ function Convert-Videos {
     # Get video files
     $videos = Get-ChildItem -Path $SourcePath -File -Include @("*.mp4", "*.mkv", "*.avi", "*.mov", "*.wmv")
     if ($videos.Count -eq 0) {
-        Write-Warning "在 $SourcePath 中未找到视频文件。"
+        Write-Warning "No video files found in path: ${SourcePath}"
         return
     }
     

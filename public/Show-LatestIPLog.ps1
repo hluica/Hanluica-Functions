@@ -28,7 +28,7 @@ function Show-LatestIPLog {
         $logTime = [DateTime]::ParseExact($latestLog.TimeStamp, "yyyy-MM-dd HH:mm:ss", $null)
         $timeDiff = (Get-Date) - $logTime
         
-        Write-Host "`n=================== the Time Information ===================" -ForegroundColor Cyan
+        Write-Host "`n===================== Time Information =====================" -ForegroundColor Cyan
         Write-Host "Record Time: $($latestLog.TimeStamp)"
         Write-Host "Time Since: $([math]::Floor($timeDiff.TotalHours)) h $($timeDiff.Minutes) min"
         
