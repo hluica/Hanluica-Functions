@@ -1,34 +1,60 @@
 <#
 .SYNOPSIS
-    复制目录结构到目标位置。
+    Copy directory structure to destination path.
 .DESCRIPTION
-    将源目录的完整目录结构复制到目标位置，仅创建文件夹结构而不复制文件。
+    Creates a directory structure mirror at the destination path without copying any files.
+    This cmdlet only creates empty folders while maintaining the same hierarchy as the source.
 .PARAMETER Path
-    源目录的路径。
+    Source directory path to copy structure from.
 .PARAMETER Destination
-    目标目录的路径。
+    Destination path where the directory structure will be created.
 .EXAMPLE
     Copy-Directory -Path "C:\SourceFolder" -Destination "D:\DestFolder"
-    将C:\SourceFolder目录的文件夹结构复制到D:\DestFolder。
+    Creates empty folder structure from C:\SourceFolder to D:\DestFolder.
 .NOTES
-    别名: cpdir
+    Alias: cpdir
 #>
 function Copy-Directory {
     [CmdletBinding()]
     param (
+        [Parameter(Mandatory = $true,
+                   Position = 0,
+                   ValueFromPipeline = $true)]
+        [ValidateScript({Test-Path $_ -PathType Container})]
         [String] $Path,
+
+        [Parameter(Mandatory = $true,
+                   Position = 1)]
+        [ValidateNotNullOrEmpty()]
         [String] $Destination
     )
     
-    $Path = Resolve-Path -Path $Path
-    $Destination = Resolve-Path -Path $Destination
-
-    $SourceDir = Get-ChildItem -Path $Path -Recurse -Directory
-    foreach ($dir in $SourceDir) {
-        $DestinationDir = $dir.FullName.Replace($Path, $Destination)
-        if (!(Test-Path -Path $DestinationDir)) {
-            New-Item -Path $DestinationDir -ItemType Directory -Force
+    try {
+        # Resolve full paths
+        $Path = (Resolve-Path -Path $Path).Path
+        
+        # Create destination if it doesn't exist
+        if (!(Test-Path -Path $Destination)) {
+            New-Item -Path $Destination -ItemType Directory -Force | Out-Null
         }
+        $Destination = (Resolve-Path -Path $Destination).Path
+
+        # Get all subdirectories
+        $SourceDirs = Get-ChildItem -Path $Path -Recurse -Directory
+        
+        # Create directory structure
+        foreach ($dir in $SourceDirs) {
+            $DestinationDir = $dir.FullName.Replace($Path, $Destination)
+            if (!(Test-Path -Path $DestinationDir)) {
+                New-Item -Path $DestinationDir -ItemType Directory -Force | Out-Null
+                Write-Verbose "Created directory: $DestinationDir"
+            }
+        }
+        
+        Write-Verbose "Directory structure copied successfully"
+    }
+    catch {
+        Write-Error "Failed to copy directory structure: $_"
     }
 }
 

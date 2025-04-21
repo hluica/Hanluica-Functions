@@ -1,27 +1,27 @@
 <#
 .SYNOPSIS
-    为虚拟机设置界面端口代理。
+    Set interface port proxy for virtual machines.
 .DESCRIPTION
-    使用netsh配置IPv6到IPv4的界面端口代理，将2233端口的流量转发到指定IP地址。
+    Configure IPv6 to IPv4 interface port proxy using netsh to forward traffic from the specified port to target IP addresses.
 .PARAMETER IPAddress
-    要设置端口代理的目标IP地址。可以是多个IP地址。
-    该参数支持管道输入。
+    Target IP address(es) for port proxy configuration.
+    This parameter supports pipeline input.
 .PARAMETER Port
-    要设置的端口号。必填，不设置默认值。
+    Port number to configure. Required, no default value.
 .EXAMPLE    
     Set-VMPortProxy -IPAddress "192.168.1.100" -Port 2233
-    # 设置单个 IP 地址
+    # Configure for a single IP address
 .EXAMPLE 
     Set-VMPortProxy -IPAddress "192.168.1.100","192.168.1.101" -Port 8080
-    # 设置多个 IP 地址
+    # Configure for multiple IP addresses
 .EXAMPLE 
     Get-VMIPAddress -VMName "Ubuntu-VM" | Set-VMPortProxy -Port 2233
-    # 通过管道传递 IP 地址
+    # Pass IP addresses through pipeline
 .NOTES
-    - 需要管理员权限
-    - 必须手动指定端口。
-    - 支持管道输入。
-    - 该函数配置的是 IPv6 到 IPv4 的端口代理，请确保存在可用的 IPv6 地址。
+    - Requires administrator privileges
+    - Port must be manually specified
+    - Supports pipeline input
+    - This function configures IPv6 to IPv4 port proxy, ensure IPv6 address is available
 #>
 function Set-VMPortProxy {
     [CmdletBinding()]
@@ -37,7 +37,7 @@ function Set-VMPortProxy {
     begin {
         $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
         if (-not $isAdmin) {
-            Write-Error "此函数需要管理员权限才能执行。请以管理员身份运行 PowerShell。"
+            Write-Error "This function requires administrator privileges. Please run PowerShell as administrator."
             return
         }
     }
@@ -46,18 +46,18 @@ function Set-VMPortProxy {
         foreach ($ip in $IPAddress) {
             try {
                 $command = "netsh interface portproxy set v6tov4 listenport=$Port listenaddress=:: connectport=$Port connectaddress=$ip"
-                Write-Verbose "执行命令: $command"
+                Write-Verbose "Executing command: $command"
                 Invoke-Expression $command | Out-Null
                 
                 if ($LASTEXITCODE -eq 0) {
-                    Write-Host "成功为 IP $ip 设置端口 $Port 的代理。" -ForegroundColor Green
+                    Write-Host "Successfully configured port proxy for IP $ip on port $Port." -ForegroundColor Green
                 }
                 else {
-                    Write-Error "为 IP $ip 设置端口 $Port 的代理时失败。"
+                    Write-Error "Failed to configure port proxy for IP $ip on port $Port."
                 }
             }
             catch {
-                Write-Error "发生错误: $_"
+                Write-Error "Error occurred: $_"
             }
         }
     }

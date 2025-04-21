@@ -1,3 +1,48 @@
+<#
+.SYNOPSIS
+Processes image files to set PPI values and convert between formats.
+.DESCRIPTION
+The Edit-Pictures cmdlet provides batch processing capabilities for image files, including:
+- Setting PPI (Pixels Per Inch) values for JPG and PNG files
+- Converting WebP files to PNG format
+- Converting JPG files to PNG while maintaining transparency
+- Linear PPI calculation based on image width
+.PARAMETER jpg
+Processes only JPG files in the current directory and its subdirectories, setting their PPI to the specified value.
+.PARAMETER png
+Processes only PNG files in the current directory and its subdirectories, setting their PPI to the specified value.
+.PARAMETER webp
+Converts WebP files to PNG format. Does not modify PPI values during conversion.
+.PARAMETER all
+Processes both JPG and PNG files, setting their PPI to the specified value.
+.PARAMETER linear
+Calculates and sets PPI values for JPG and PNG files based on their width using a linear scale. (ppi = int (width / 10))
+.PARAMETER trans
+Processes images for transparency:
+- Converts JPG files to PNG format
+- Optionally sets PPI for both converted and existing PNG files
+.PARAMETER no_ppi
+Skip PPI setting for PNG files. Only affects the -trans parameter.
+.PARAMETER ppi
+Specifies the target PPI value. Default is 144. Must be greater than 0.
+.EXAMPLE
+Edit-Pictures -jpg -ppi 300
+Sets the PPI of all JPG files in the current directory and subdirectories to 300.
+.EXAMPLE
+Edit-Pictures -all -ppi 144
+Sets the PPI of all JPG and PNG files to 144.
+.EXAMPLE
+Edit-Pictures -trans -no_ppi
+Converts JPG files to PNG without modifying PPI values of any files.
+.EXAMPLE
+Edit-Pictures -linear
+Sets PPI values for all images based on their width using a linear calculation.
+.NOTES
+Alias: ma
+Requires ImageSharpProcessorLib for image processing operations.
+.LINK
+https://github.com/Hanluica-Functions
+#>
 function Edit-Pictures {
     [CmdletBinding(DefaultParameterSetName = 'SingleFormat')]
     param (

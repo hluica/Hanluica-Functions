@@ -6,9 +6,9 @@ A feature-rich PowerShell module providing various utility functions.
 
 ## 功能特点 | Features
 
-> 注意：所有公开函数均提供详细的中文帮助文档（Get-Help）；代码中的行内注释采用中英混合的形式。
->
-> Note: All public functions come with detailed Chinese help documentation (Get-Help), while inline code comments are written in a mix of Chinese and English.
+所有公开函数均提供详细的英文帮助文档（Get-Help）。
+
+All public functions come with detailed English help documentation (Get-Help).
 
 此模块包含以下主要功能：
 
@@ -118,6 +118,10 @@ Show-LatestIPLog
 # 管理 Windows 功能开关 | Manage Windows feature flags
 Set-WindowsFeatureState -FeatureId 41415841
 ```
+
+## 更新日志 | Changelog
+
+- 25-04-21 | 注释和帮助信息已翻译为英文。 | All comments and help information has been translated to English.
 
 ## 许可证 | License
 

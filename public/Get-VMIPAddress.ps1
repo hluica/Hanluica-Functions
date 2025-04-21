@@ -1,18 +1,18 @@
 <#
 .SYNOPSIS
-    获取指定虚拟机的IP地址。
+    Get IP addresses of the specified virtual machine.
 .DESCRIPTION
-    获取Hyper-V虚拟机的所有IPv4地址，排除链路本地地址。
+    Retrieves all IPv4 addresses of a Hyper-V virtual machine, excluding link-local addresses.
 .PARAMETER VMName
-    虚拟机的名称。
+    Name of the virtual machine.
 .EXAMPLE
     Get-VMIPAddress -VMName "Ubuntu-VM"
-    获取名为"Ubuntu-VM"的虚拟机的IP地址。
+    Gets IP addresses of the virtual machine named "Ubuntu-VM".
 .OUTPUTS
     System.String[]
-    返回虚拟机的IP地址列表。
+    Returns a list of IP addresses for the virtual machine.
 .NOTES
-    需要Hyper-V管理员权限。
+    Requires Hyper-V Administrator privileges.
 #>
 function Get-VMIPAddress {
     [CmdletBinding()]
@@ -25,7 +25,7 @@ function Get-VMIPAddress {
         Get-VM -Name $VMName -ErrorAction Stop | Out-Null
     }
     catch {
-        Write-Error "未找到名为 '$VMName' 的虚拟机。请确认虚拟机名称是否正确。"
+        Write-Error "Virtual machine '$VMName' not found. Please verify the virtual machine name."
         return
     }
 
@@ -39,7 +39,7 @@ function Get-VMIPAddress {
     }
 
     if ($ipAddresses.Count -eq 0) {
-        Write-Error "虚拟机 '$VMName' 当前没有可用的 IP 地址。可能是虚拟机尚未启动或尚未获得 IP。"
+        Write-Error "No IP addresses available for virtual machine '$VMName'. The VM may not be running or hasn't obtained an IP yet."
     }
     else {
         return $ipAddresses

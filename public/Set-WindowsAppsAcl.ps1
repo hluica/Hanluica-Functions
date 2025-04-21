@@ -1,62 +1,62 @@
 <#
 .SYNOPSIS
-    检查并授予当前用户对 WindowsApps 文件夹的"读取和执行"权限。
+    Checks and grants the current user 'Read and Execute' permissions for the WindowsApps folder.
 .DESCRIPTION
-    此函数用于授予当前用户对 %ProgramFiles%\WindowsApps 目录的"读取和执行"权限，
-    权限将应用于"此文件夹和子文件夹"。函数会自动处理 TrustedInstaller 所有权问题。
+    This function grants the current user 'Read and Execute' permissions for the %ProgramFiles%\WindowsApps directory.
+    The permissions apply to 'This folder and subfolders'. The function automatically handles TrustedInstaller ownership issues.
 
-    主要功能：
-    1. 检查管理员权限
-    2. 识别当前用户和 TrustedInstaller SID
-    3. 获取 WindowsApps 文件夹的原始所有者和 ACL
-    4. 检查当前用户是否已有所需权限
-    5. 如果权限缺失：
-       - 获取文件夹所有权（设置为 Administrators 组）
-       - 添加所需的访问控制条目（ACE）
-       - 应用修改后的 ACL
-       - 恢复原始所有者（TrustedInstaller）
-    6. 确保在修改 ACL 过程中其他权限保持不变
+    Key features:
+    1. Checks for administrator privileges.
+    2. Identifies the current user and TrustedInstaller SID.
+    3. Retrieves the original owner and ACL of the WindowsApps folder.
+    4. Checks if the current user already has the required permissions.
+    5. If permissions are missing:
+       - Takes ownership of the folder (setting it to the Administrators group).
+       - Adds the necessary Access Control Entry (ACE).
+       - Applies the modified ACL.
+       - Restores the original owner (TrustedInstaller).
+    6. Ensures other permissions remain unchanged during the ACL modification process.
 .INPUTS
-    该函数无输入参数，因其执行的操作只有一种。
+    This function takes no input parameters as it performs a specific, predefined operation.
 .EXAMPLE
     Set-WindowsAppsAcl
-    检查并添加所需权限，完成后恢复原始所有者。
+    Checks and adds the required permissions, then restores the original owner upon completion.
 .NOTES
-    PowerShell版本：7
-    需要管理员权限
-    ⚠️警告：修改系统文件夹的所有权和权限具有潜在风险，请谨慎使用。
+    PowerShell Version: 7
+    Requires administrator privileges.
+    ⚠️ WARNING: Modifying system folder ownership and permissions carries potential risks. Use with caution.
 #>
 function Set-WindowsAppsAcl {
     [CmdletBinding()]
     param ()
 
-    # --- 预定义信息 ---
-    # WindowsApps 文件夹路径
+    # --- Predefined Information ---
+    # WindowsApps folder path
     $windowsAppsPath = Join-Path $env:ProgramFiles "WindowsApps"
-    # "NT SERVICE\TrustedInstaller" 的 SID
+    # SID for "NT SERVICE\TrustedInstaller"
     $trustedInstallerSid = "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464"
 
-    # --- 函数开始 ---
-    Write-Host "ℹ️ 开始运行。`n📝 检查并授予 ${env:USERNAME} 对 ${windowsAppsPath} 的读取和执行权限（此文件夹和子文件夹）。" -ForegroundColor Blue
+    # --- Function Start ---
+    Write-Host "ℹ️ Starting run.`n📝 Checking and granting ${env:USERNAME} Read and Execute permissions for ${windowsAppsPath} (This folder and subfolders)." -ForegroundColor Blue
     Write-Host "--------------------------------------------------------------------`n" -ForegroundColor Magenta
 
-    # 1. 验证管理员权限
-    Write-Host "🛠️ 检查 1/5: 正在检查管理员权限。" -ForegroundColor Magenta
+    # 1. Verify administrator privileges
+    Write-Host "🛠️ Check 1/5: Checking for administrator privileges." -ForegroundColor Magenta
     $currentUserPrincipal = [System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()
     if (-not $currentUserPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        Write-Error "此脚本需要管理员权限。请以管理员身份运行 PowerShell。"
-        if ($Host.Name -eq 'ConsoleHost') { Read-Host "按 Enter 键终止运行" }
+        Write-Error "This script requires administrator privileges. Please run PowerShell as an administrator."
+        if ($Host.Name -eq 'ConsoleHost') { Read-Host "Press Enter key to terminate execution" }
         return 1
     }
-    Write-Host "✅ 管理员权限检查通过。" -ForegroundColor Green
+    Write-Host "✅ Administrator privileges check passed." -ForegroundColor Green
 
-    # 2. 获取当前用户身份和 TrustedInstaller 账户对象
-    Write-Host "🛠️ 检查 2/5: 正在获取用户身份信息。" -ForegroundColor Magenta
+    # 2. Get current user identity and TrustedInstaller account object
+    Write-Host "🛠️ Check 2/5: Getting user identity information." -ForegroundColor Magenta
     try {
         $currentUserIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
         $userAccountName = $currentUserIdentity.Name # User full name, e.g., "COMPUTERNAME\Username"
         $userSid = $currentUserIdentity.User # User SID
-        Write-Host "ℹ️ 当前用户: ${userAccountName}`n   SID: $($userSid.Value))" -ForegroundColor Blue
+        Write-Host "ℹ️ Current user: ${userAccountName}`n   SID: $($userSid.Value))" -ForegroundColor Blue
 
         $tiSidObject = [System.Security.Principal.SecurityIdentifier]$trustedInstallerSid
         $tiAccount = $tiSidObject.Translate([System.Security.Principal.NTAccount])
@@ -64,44 +64,44 @@ function Set-WindowsAppsAcl {
 
         $adminsGroup = [System.Security.Principal.NTAccount]"BUILTIN\Administrators"
         $adminsSid = $adminsGroup.Translate([System.Security.Principal.SecurityIdentifier])
-        Write-Host "ℹ️ 临时所有者将设置为: $($adminsGroup.Value)`n   SID: $($adminsSid.Value))" -ForegroundColor Blue
+        Write-Host "ℹ️ Temporary owner will be set to: $($adminsGroup.Value)`n   SID: $($adminsSid.Value))" -ForegroundColor Blue
     }
     catch {
-        Write-Error "无法获取用户或组信息: $($_.Exception.Message)"
-        if ($Host.Name -eq 'ConsoleHost') { Read-Host "按 Enter 键终止运行" }
+        Write-Error "Failed to get user or group information: $($_.Exception.Message)"
+        if ($Host.Name -eq 'ConsoleHost') { Read-Host "Press Enter key to terminate execution" }
         return 1
     }
 
-    # 3. 检查文件夹是否存在
-    Write-Host "🛠️ 检查 3/5: 正在检查文件夹可用性。" -ForegroundColor Magenta
+    # 3. Check if the folder exists
+    Write-Host "🛠️ Check 3/5: Checking folder availability." -ForegroundColor Magenta
     if (-not (Test-Path -LiteralPath $windowsAppsPath -PathType Container)) {
-        Write-Error "目标文件夹 '$windowsAppsPath' 不存在。"
-        if ($Host.Name -eq 'ConsoleHost') { Read-Host "按 Enter 键终止运行" }
+        Write-Error "Target folder '$windowsAppsPath' does not exist."
+        if ($Host.Name -eq 'ConsoleHost') { Read-Host "Press Enter key to terminate execution" }
         return 1
     }
-    Write-Host "✅ 目标文件夹可用。`n   目标文件夹路径：${windowsAppsPath}" -ForegroundColor Green
+    Write-Host "✅ Target folder is available.`n   Target folder path: ${windowsAppsPath}" -ForegroundColor Green
 
-    # --- 定义所需权限参数 ---
-    $requiredRights = [System.Security.AccessControl.FileSystemRights]::ReadAndExecute # 权限：读取和执行
-    $requiredInheritance = [System.Security.AccessControl.InheritanceFlags]::ContainerInherit # 继承：此文件夹和子文件夹
-    $requiredPropagation = [System.Security.AccessControl.PropagationFlags]::None # # 传播：不允许传播
-    $requiredAccessType = [System.Security.AccessControl.AccessControlType]::Allow # 访问控制类型：允许
+    # --- Define required permission parameters ---
+    $requiredRights = [System.Security.AccessControl.FileSystemRights]::ReadAndExecute # Permission: Read and Execute
+    $requiredInheritance = [System.Security.AccessControl.InheritanceFlags]::ContainerInherit # Inheritance: This folder and subfolders
+    $requiredPropagation = [System.Security.AccessControl.PropagationFlags]::None # Propagation: None
+    $requiredAccessType = [System.Security.AccessControl.AccessControlType]::Allow # Access control type: Allow
 
-    # --- 主要操作 ---
+    # --- Main Operations ---
     $originalOwner = $null
     $acl = $null
     $ownerRestored = $true
 
     try {
-        # 4. 获取原始 ACL 和所有者
-        Write-Host "🛠️ 检查 4/5: 正在获取目标文件夹的原始 ACL 和所有者..." -ForegroundColor Magenta
+        # 4. Get original ACL and owner
+        Write-Host "🛠️ Check 4/5: Getting original ACL and owner of the target folder..." -ForegroundColor Magenta
         $acl = Get-Acl -LiteralPath $windowsAppsPath
         $originalOwner = $acl.Owner
-        Write-Host "✅ 成功获取 ACL。`n   原始所有者: ${originalOwner}" -ForegroundColor Green
+        Write-Host "✅ Successfully retrieved ACL.`n   Original owner: ${originalOwner}" -ForegroundColor Green
 
-        # 5. 检查现有权限
+        # 5. Check existing permissions
         $permissionExists = $false
-        Write-Host "🛠️ 检查 5/5: 正在检查 ${userAccountName} 是否已拥有所需的 ReadAndExecute 权限 (ContainerInherit)..." -ForegroundColor Magenta
+        Write-Host "🛠️ Check 5/5: Checking if ${userAccountName} already has the required ReadAndExecute permissions (ContainerInherit)..." -ForegroundColor Magenta
 
         foreach ($ace in $acl.Access) {
             if ($ace.IdentityReference -eq $userSid) {
@@ -110,27 +110,27 @@ function Set-WindowsAppsAcl {
                     $ace.InheritanceFlags -eq $requiredInheritance -and
                     $ace.PropagationFlags -eq $requiredPropagation) {
                     $permissionExists = $true
-                    Write-Host "🎉 现有权限规则已匹配。" -ForegroundColor Green
+                    Write-Host "🎉 Existing permission rule matches." -ForegroundColor Green
                     break
                 }
             }
         }
 
-        # 6. 如果权限不存在或强制执行，则执行修改流程
+        # 6. If permission does not exist, execute the modification process
         if (-not $permissionExists) {
-            Write-Host "⚠️ ${userAccountName} 需要添加所需的权限。开始修改流程..." -ForegroundColor Yellow
+            Write-Host "⚠️ ${userAccountName} needs the required permissions added. Starting modification process..." -ForegroundColor Yellow
             Write-Host "`n--------------------------------------------------------------------`n" -ForegroundColor Magenta
-            $ownerRestored = $false # 无论 try 块是否成功或出错，只要获取了所有权 ($ownerRestored -eq $false) 就会恢复原始所有者
+            $ownerRestored = $false # Regardless of whether the try block succeeds or errors, the original owner will be restored if ownership was taken ($ownerRestored -eq $false)
 
-            # --- a. 获取所有权 ---
-            Write-Host "🛠️ 步骤 1/3: 尝试将所有者更改为 Administrators 组。" -ForegroundColor Magenta
+            # --- a. Take ownership ---
+            Write-Host "🛠️ Step 1/3: Attempting to change owner to the Administrators group." -ForegroundColor Magenta
             $acl = Get-Acl -LiteralPath $windowsAppsPath
             $acl.SetOwner($adminsGroup)
             Set-Acl -LiteralPath $windowsAppsPath -AclObject $acl -ErrorAction Stop
-            Write-Host "✅ 成功将所有者临时更改为 Administrators。" -ForegroundColor Green
+            Write-Host "✅ Successfully changed owner temporarily to Administrators." -ForegroundColor Green
 
-            # --- b. 添加权限规则 ---
-            Write-Host "🛠️ 步骤 2/3: 添加 'ReadAndExecute' (ContainerInherit) 权限规则..." -ForegroundColor Magenta
+            # --- b. Add permission rule ---
+            Write-Host "🛠️ Step 2/3: Adding 'ReadAndExecute' (ContainerInherit) permission rule..." -ForegroundColor Magenta
             $newRule = New-Object System.Security.AccessControl.FileSystemAccessRule(
                 $userSid,
                 $requiredRights,
@@ -138,19 +138,19 @@ function Set-WindowsAppsAcl {
                 $requiredPropagation,
                 $requiredAccessType
             )
-            $acl = Get-Acl -LiteralPath $windowsAppsPath # 再次获取 ACL，以防万一
+            $acl = Get-Acl -LiteralPath $windowsAppsPath # Get ACL again, just in case
             $acl.AddAccessRule($newRule)
-            # --- c. 应用修改后的 ACL ---
+            # --- c. Apply modified ACL ---
             Set-Acl -LiteralPath $windowsAppsPath -AclObject $acl -ErrorAction Stop
-            Write-Host "✅ 成功添加权限规则并应用 ACL。" -ForegroundColor Green
+            Write-Host "✅ Successfully added permission rule and applied ACL." -ForegroundColor Green
 
         } else {
-            Write-Host "☑️ ${userAccountName} 已拥有所需的权限。无需操作。" -ForegroundColor Magenta
+            Write-Host "☑️ ${userAccountName} already has the required permissions. No action needed." -ForegroundColor Magenta
         }
     }
     catch {
-        Write-Error "在处理权限时发生错误: $($_.Exception.Message)"
-        Write-Error "函数执行失败。"
+        Write-Error "An error occurred while processing permissions: $($_.Exception.Message)"
+        Write-Error "Function execution failed."
     }
     finally {
         if (
@@ -158,26 +158,26 @@ function Set-WindowsAppsAcl {
             ($null -ne $originalOwner) -and
             ($originalOwner -ne $adminsGroup.Value)
         ) {
-            Write-Host "🛠️ 步骤 3/3: 尝试恢复原始所有者 (${originalOwner})。" -ForegroundColor Magenta
+            Write-Host "🛠️ Step 3/3: Attempting to restore original owner (${originalOwner})." -ForegroundColor Magenta
             try {
-                $aclForRestore = Get-Acl -LiteralPath $windowsAppsPath # 再次获取 ACL，以防万一
+                $aclForRestore = Get-Acl -LiteralPath $windowsAppsPath # Get ACL again, just in case
                 $originalOwnerAccount = New-Object System.Security.Principal.NTAccount($originalOwner)
                 $aclForRestore.SetOwner($originalOwnerAccount)
                 Set-Acl -LiteralPath $windowsAppsPath -AclObject $aclForRestore -ErrorAction Stop
-                $ownerRestored = $true # 标记为已恢复
-                Write-Host "✅ 成功恢复所有者为 $originalOwner。" -ForegroundColor Green
+                $ownerRestored = $true # Mark as restored
+                Write-Host "✅ Successfully restored owner to $originalOwner." -ForegroundColor Green
             }
             catch {
-                Write-Error "恢复原始所有者 ($originalOwner) 失败: $($_.Exception.Message)"
-                Write-Warning "文件夹 '$windowsAppsPath' 的所有者可能仍为 Administrators！请手动恢复为 'NT SERVICE\TrustedInstaller'。"
+                Write-Error "Failed to restore original owner ($originalOwner): $($_.Exception.Message)"
+                Write-Warning "The owner of folder '$windowsAppsPath' might still be Administrators! Please manually restore it to 'NT SERVICE\TrustedInstaller'."
             }
         }
         elseif ($ownerRestored -eq $false) {
-            Write-Warning "无法自动恢复原始所有者，因为原始所有者信息未知或已是 Administrators。"
-            Write-Warning "请手动检查并恢复 '$windowsAppsPath' 的所有者为 'NT SERVICE\TrustedInstaller'。"
+            Write-Warning "Could not automatically restore the original owner because the original owner information is unknown or was already Administrators."
+            Write-Warning "Please manually check and restore the owner of '$windowsAppsPath' to 'NT SERVICE\TrustedInstaller'."
         }
     }
 
     Write-Host "`n--------------------------------------------------------------------" -ForegroundColor Magenta
-    Write-Host "函数执行完毕。" -ForegroundColor Blue
+    Write-Host "Function execution finished." -ForegroundColor Blue
 }

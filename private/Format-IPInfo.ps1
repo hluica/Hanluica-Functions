@@ -14,7 +14,7 @@ function Format-IPInfo {
         }
     }
 
-    # 设置接口排序优先级
+    # Set interface sort order priority
     $sortOrder = @{
         'WLAN' = 1
         '以太网' = 2
@@ -28,7 +28,7 @@ function Format-IPInfo {
             $sortOrder[$interface]
         }
         else {
-            4  # 其他已知接口的默认排序值
+            4  # Default sort value for other known interfaces
         }
     } | Format-Table -AutoSize
 }

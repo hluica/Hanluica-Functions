@@ -7,7 +7,7 @@ function Update-IPLog {
         [string]$LogFile
     )
 
-    # 读取历史记录
+    # Read history
     if (Test-Path $LogFile) {
         $LogHistory = Get-Content $LogFile -Raw | ConvertFrom-Json
         if ($LogHistory -isnot [Array]) { $LogHistory = @($LogHistory) }
@@ -16,19 +16,19 @@ function Update-IPLog {
         $LogHistory = @()
     }
 
-    # 比较IP变化
+    # Compare IP changes
     $LastIPInfo = if ($LogHistory.Count -gt 0) { $LogHistory[0].IPInfo } else { @() }
     $CurrentIPString = ($CurrentIPInfo | ConvertTo-Json)
     $LastIPString = ($LastIPInfo | ConvertTo-Json)
     
     if ($CurrentIPString -ne $LastIPString) {
-        # 创建新记录
+        # Create new entry
         $NewEntry = @{
             TimeStamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
             IPInfo    = $CurrentIPInfo
         }
         
-        # 更新日志
+        # Update logs
         $LogHistory = @($NewEntry) + $LogHistory
         if ($LogHistory.Count -gt 100) {
             $LogHistory = $LogHistory | Select-Object -First 100

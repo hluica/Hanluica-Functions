@@ -1,65 +1,65 @@
 <#
 .SYNOPSIS
-    将子目录中的文件移动到当前目录，并以子目录名作为前缀。
+    Moves files from subdirectories to the current directory, prefixing them with the subdirectory name.
 .DESCRIPTION
-    遍历当前目录下的所有子目录（*不包含*二级以及更深层递归），将其中的非txt文件移动到当前目录。
-    移动的文件将以所在子目录的名称作为前缀。
-    支持处理包含特殊字符的文件名。
-    显示详细的处理进度和错误信息。
+    Iterates through all immediate subdirectories of the current directory (does *not* recurse into deeper levels), moving non-txt files within them to the current directory.
+    Moved files are prefixed with the name of their original subdirectory.
+    Supports handling filenames with special characters.
+    Displays detailed progress and error messages.
 .EXAMPLE
     Move-SubdirFiles
-    将当前目录下所有子目录中的非txt文件移动到当前目录。
+    Moves files from all immediate subdirectories of the current directory to the current directory.
 .NOTES
-    - 需要确保当前目录有足够的写入权限
-    - 建议在执行前备份重要文件
-    - 如遇到文件名冲突，将自动覆盖目标文件
-    - 别名： flatmv
+    - Ensure you have sufficient write permissions in the current directory.
+    - It is recommended to back up important files before execution.
+    - If filename conflicts occur, the target file will be automatically overwritten.
+    - Alias: flatmv
 #>
 function Move-SubdirFiles {
     [CmdletBinding()]
     param()
-    
-    # 检查是否具有管理员权限
+
+    # Check if running with administrator privileges
     $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     if (-not $isAdmin) {
-        Write-Warning "⚠️脚本可能需要管理员权限才能正常运行"
+        Write-Warning "⚠️ Script might require administrator privileges to run correctly"
     }
 
     $currentPath = Get-Location
-    $dirs = Get-ChildItem -Directory 
-    Write-Host "开始处理……`n待处理子目录数量：$($dirs.Count)" -ForegroundColor Magenta
+    $dirs = Get-ChildItem -Directory
+    Write-Host "🛠️ Starting processing...`n   Number of subdirectories to process: $($dirs.Count)" -ForegroundColor Magenta
 
     $dirs | ForEach-Object {
         $dirName = $_.Name
-        # 使用 Join-Path 构建完整路径
+        # Use Join-Path to build the full path
         $dirPath = Join-Path -Path $_.FullName -ChildPath "*"
-        Write-Host "正在处理子目录：$dirPath" -ForegroundColor Cyan
-        
+        Write-Host "Processing subdirectory: $dirPath" -ForegroundColor Cyan
+
         try {
-            # 使用 -LiteralPath 参数以确保正确处理特殊字符
+            # Use the -LiteralPath parameter to ensure correct handling of special characters
             $files = Get-ChildItem -LiteralPath "$($_.FullName)" -File
-            Write-Host "当前子目录中的文件数量：$($files.Count)" -ForegroundColor Magenta
-            
+            Write-Host "Number of files in the current subdirectory: $($files.Count)" -ForegroundColor Magenta
+
             $files | ForEach-Object {
                 $newFileName = "{0}_{1}" -f $dirName, $_.Name
                 $targetPath = Join-Path -Path $currentPath -ChildPath $newFileName
-                
+
                 try {
                     Move-Item -LiteralPath $_.FullName -Destination $targetPath -Force -ErrorAction Stop
-                    Write-Host "成功移动文件：" -ForegroundColor Green
+                    Write-Host "Successfully moved file:" -ForegroundColor Green
                     Write-Host "    $($_.FullName)`n -> $targetPath"
                 }
                 catch {
-                    Write-Error "移动文件失败：$($_.FullName)`n错误信息：$($_.Exception.Message)"
+                    Write-Error "Failed to move file: $($_.FullName)`nError message: $($_.Exception.Message)"
                 }
             }
         }
         catch {
-            Write-Error "处理目录失败：$dirPath`n错误信息：$($_.Exception.Message)"
+            Write-Error "Failed to process directory: $dirPath`nError message: $($_.Exception.Message)"
         }
     }
 
-    Write-Host "命令执行完成。请确认运行情况。" -ForegroundColor Magenta
+    Write-Host "Command execution completed. Please verify the results." -ForegroundColor Magenta
 }
 
 Set-Alias -Name flatmv -Value Move-SubdirFiles
