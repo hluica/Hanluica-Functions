@@ -33,6 +33,7 @@ This module includes the following main features:
   - 支持线性 PPI 计算 | Supports linear PPI calculation
   - 支持批量格式转换 | Supports batch format conversion
   - 别名 | Alias: `ma`
+  - 提供终端文件统计与进度显示 | Provides statics on files & progress bar in terminal
 
 ### 视频处理 | Video Processing
 - `Convert-Videos`: 使用 FFMPEG 进行视频转码 | Video transcoding using FFMPEG
@@ -51,6 +52,7 @@ This module includes the following main features:
 ### Windows 系统管理 | Windows System Management
 - `Set-WindowsAppsAcl`: 设置 WindowsApps 文件夹的访问权限 | Set access permissions for WindowsApps folder
 - `Set-WindowsFeatureState`: 使用 ViveTool 管理 Windows 功能开关 | Manage Windows feature flags using ViveTool
+- 这些函数提供了详细且易读的终端信息。 | These functions provide detailed and understandable information in terminal
 
 ## 系统要求 | System Requirements
 
