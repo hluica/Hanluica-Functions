@@ -58,7 +58,8 @@ This module includes the following main features:
 - 部分功能仅限于 Windows 操作系统 | Some features are Windows-only
 - 部分功能需要管理员权限 | Some features require administrator privileges
 - 视频转码功能需要 FFMPEG 且需要 NVIDIA 显卡支持 | Video transcoding requires FFMPEG and NVIDIA GPU support
-- 图像处理功能需要 ImageSharp 库支持（已包含在模块中）| Image processing requires ImageSharp library (included in module)
+- 图像处理功能需要 ImageSharpProcessorLib 库支持（已包含在模块中，或者参见[Github主页](https://github.com/hluica/ImageSharpProcessorLib)）| Image processing requires ImageSharpProcessorLib (included in the module; or visit the [Homepage](https://github.com/hluica/ImageSharpProcessorLib))
+  - 该库由 .NET 9 生成并依赖于 SixLabors.ImageSharp，故需要 .NET 9 运行时。依赖库则已包含在模块中 | The ImageSharpProcessorLib is built with .NET 9, and dependent on SixLabors.ImageSharp (included in the module)
 
 ## 安装 | Installation
 
@@ -121,7 +122,8 @@ Set-WindowsFeatureState -FeatureId 41415841
 
 ## 更新日志 | Changelog
 
-- 25-04-21 | 注释和帮助信息已翻译为英文。 | All comments and help information has been translated to English.
+- 25-04-22 | 检查并移除了未被翻译的中文。 | Untransalted Chinese has been replaced.
+- 25-04-21 | 注释和帮助信息已翻译为英文。 | Comments and help information has been translated to English.
 
 ## 许可证 | License
 
