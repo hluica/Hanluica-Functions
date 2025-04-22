@@ -72,7 +72,7 @@ function Convert-Videos {
     $maxRate = $BitRate * 1.5
     $bufSize = $BitRate * 2
     
-    # 开始处理
+    # Start Process
     Write-Host "Found $($videos.Count) video files, starting processing..." -ForegroundColor Cyan
     $count = 0
     foreach ($video in $videos) {
