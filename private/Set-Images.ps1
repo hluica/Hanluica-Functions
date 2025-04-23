@@ -28,9 +28,9 @@ function Set-Images {
         } catch {
             $basicErrorOutput = "Error processing file '$($file.FullName)': $($_.Exception.Message)" # for error stream
             $verboseErrorOutput = @"
-${yellow}ERROR PROCESSING FILE!${reset}
-${yellow}- File: ${underline}$($file.FullName)${reset}
-${yellow}- Message: ${reset}${fuchsia}$($_.Exception.Message)${reset}
+❗ ${yellow}ERROR PROCESSING FILE!${reset}
+   ${yellow}File   : ${underline}$($file.FullName)${reset}
+   ${yellow}Message: ${reset}${fuchsia}$($_.Exception.Message)${reset}
 "@ # for display in terminal
             Write-Error -Message $basicErrorOutput -ErrorAction SilentlyContinue
             Write-Host $verboseErrorOutput

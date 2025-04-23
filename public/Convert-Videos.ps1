@@ -23,7 +23,7 @@
     - Requires NVIDIA GPU with NVENC support
     - Output files will use the same filename as source
     - Does not process subdirectories recursively
-    - Supported input formats: mp4, mkv, avi, mov, wmv
+    - Supported input formats: mp4, mkv, avi, mov, wmv, webm
     - Output format: mp4.
     - ❗ May not preserve subtitles, chapters, and other container-specific features
 #>
@@ -65,7 +65,7 @@ function Convert-Videos {
     $ffmpeg = "ffmpeg.exe"
     
     # Get video files
-    $videos = Get-ChildItem -Path $SourcePath -File -Include @("*.mp4", "*.mkv", "*.avi", "*.mov", "*.wmv")
+    $videos = Get-ChildItem -Path $SourcePath -File -Include @("*.mp4", "*.mkv", "*.avi", "*.mov", "*.wmv", "*.webm")
     if ($videos.Count -eq 0) {
         Write-Warning "No video files found in path: ${SourcePath}"
         return
@@ -77,7 +77,7 @@ function Convert-Videos {
     
     # Start Process
     Write-Host "🔍 Found $($videos.Count) video files, starting processing..." -ForegroundColor Blue
-    Write-Host "❗ Warning: Converting to MP4 may remove subtitles and embedded sources. " -ForegroundColor Yellow
+    Write-Host "❗ Warning: Converting to MP4 may remove subtitles and embedded sources.`n" -ForegroundColor Yellow
     $count = 0
     foreach ($video in $videos) {
         $outputPath = Join-Path -Path "${DestinationPath}" -ChildPath "$([System.IO.Path]::GetFileNameWithoutExtension($video.Name)).mp4"
@@ -103,6 +103,6 @@ function Convert-Videos {
         & $ffmpeg $ffmpegArgs
 
         $count++
-        Write-Host "🔄️ $($count) in $($videos.Count) files processed: `n   $($video.Name)`n-> $($outputPath)" -ForegroundColor Blue
+        Write-Host "`n🔄️ $($count) in $($videos.Count) files processed: `n   $($video.Name)`n-> $($outputPath)`n" -ForegroundColor Blue
     }
 }
