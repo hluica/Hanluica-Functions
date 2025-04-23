@@ -5,6 +5,7 @@
     Batch video transcoding using FFMPEG with NVIDIA GPU acceleration.
     Uses HEVC/H.265 encoder (NVENC) with high quality preset and 2-pass encoding.
     Audio streams will be copied directly.
+    Output files will be converted to MP4 format.
 .PARAMETER BitRate
     Average video bitrate in Mbps (e.g., 12 means 12Mbps). Specify manually. Value can be an integer between 1 and 100.
 .PARAMETER SourcePath
@@ -23,6 +24,8 @@
     - Output files will use the same filename as source
     - Does not process subdirectories recursively
     - Supported input formats: mp4, mkv, avi, mov, wmv
+    - Output format: mp4.
+    - ❗ May not preserve subtitles, chapters, and other container-specific features
 #>
 function Convert-Videos {
     [CmdletBinding()]
@@ -73,10 +76,11 @@ function Convert-Videos {
     $bufSize = $BitRate * 2
     
     # Start Process
-    Write-Host "Found $($videos.Count) video files, starting processing..." -ForegroundColor Cyan
+    Write-Host "🔍 Found $($videos.Count) video files, starting processing..." -ForegroundColor Blue
+    Write-Host "❗ Warning: Converting to MP4 may remove subtitles and embedded sources. " -ForegroundColor Yellow
     $count = 0
     foreach ($video in $videos) {
-        $outputPath = Join-Path -Path "${DestinationPath}" -ChildPath "$($video.Name)"
+        $outputPath = Join-Path -Path "${DestinationPath}" -ChildPath "$([System.IO.Path]::GetFileNameWithoutExtension($video.Name)).mp4"
         
         $ffmpegArgs = @(
             "-y"                           # Overwrite output files
@@ -99,6 +103,6 @@ function Convert-Videos {
         & $ffmpeg $ffmpegArgs
 
         $count++
-        Write-Host "[Convert-Videos @ pwsh] $($count) in $($videos.Count) files processed: `n    $($video.Name)`n -> $($outputPath)" -ForegroundColor Green
+        Write-Host "🔄️ $($count) in $($videos.Count) files processed: `n   $($video.Name)`n-> $($outputPath)" -ForegroundColor Blue
     }
 }
