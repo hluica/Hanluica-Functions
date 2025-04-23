@@ -42,28 +42,39 @@ function Convert-Videos {
     )
     
     # Validate paths
+    # Validate SourcePath
     try {
-        $SourcePath = [string](Resolve-Path $SourcePath) + "\*"
-        if (-not (Test-Path $DestinationPath)) {
-            New-Item -ItemType Directory -Path $DestinationPath -Force | Out-Null
-        }
-        $DestinationPath = Resolve-Path $DestinationPath
+        $SourcePath = Join-Path -Path "$((Resolve-Path $SourcePath).ProviderPath)" -ChildPath "*"
     }
     catch {
-        Write-Error "Path validation failed: $_"
+        Write-Error "Unexpected error occurred while validating Source Path: $($_.Exception.Message)"
         return
     }
+    # Validate DestinationPath
+    $resolvedDestPath = Resolve-OrCreateDirectory -Path $DestinationPath
+    if (-not $resolvedDestPath) {
+        # If the Resolve-OrCreateDirectory function fails, it will return $null, which leads us to return.
+        return
+    }
+    $DestinationPath = $resolvedDestPath
     
     # Validate ffmpeg
+    $ffmpegPath = $null
     try {
-        ffmpeg.exe -version | Out-Null
+        $ffmpeg = Get-Command "ffmpeg.exe" -CommandType Application -ErrorAction Stop
+        $ffmpegPath = $ffmpeg.Source
+        Write-Verbose "Using FFMPEG found at: '$ffmpegPath'"
     }
-    catch {
-        Write-Error "FFMPEG not found. Please ensure FFMPEG is installed and added to PATH."
+    catch [System.Management.Automation.CommandNotFoundException] {
+        Write-Error "FFMPEG not found. Please ensure ffmpeg.exe exists and its location is included in the PATH environment variable."
         return
     }
-    $ffmpeg = "ffmpeg.exe"
-    
+    catch {
+        # Catch any other exceptions that may occur.
+        Write-Error "Unexpected error occurred while locating ffmpeg.exe: $($_.Exception.Message)"
+        return
+    }
+
     # Get video files
     $videos = Get-ChildItem -Path $SourcePath -File -Include @("*.mp4", "*.mkv", "*.avi", "*.mov", "*.wmv", "*.webm")
     if ($videos.Count -eq 0) {
@@ -97,12 +108,17 @@ function Convert-Videos {
             "-spatial-aq", "1"             # Spatial adaptive quantization: On
             "-temporal-aq", "1"            # Temporal adaptive quantization: On
             "-c:a", "copy"                 # Audio stream: Direct copy
-            "$($outputPath)"               # Output file
+            "${outputPath}"                # Output file
         )
         
-        & $ffmpeg $ffmpegArgs
+        & $ffmpegPath $ffmpegArgs
 
         $count++
-        Write-Host "`n🔄️ $($count) in $($videos.Count) files processed: `n   $($video.Name)`n-> $($outputPath)`n" -ForegroundColor Blue
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "`n🔄️ $($count) in $($videos.Count) files processed successfully: `n   $($video.Name)`n-> ${outputPath}`n" -ForegroundColor Blue
+        } else {
+            Write-Warning "One task failed with FFMPEG exit code $LASTEXITCODE."
+        }
     }
 }

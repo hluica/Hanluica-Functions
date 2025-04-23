@@ -26,6 +26,18 @@ This module includes the following main features:
   Flattens current directory structure: moves files from subdirectories to current directory, using subdirectory names as prefixes.
   - Only considers depth-1 structure, i.e., only one level of subdirectories.
 
+- `Resolve-OrCreateDirectory`: 解析或创建目录路径
+  - 支持解析完整路径
+  - 自动创建不存在的目录
+  - 支持管道输入
+  - 提供详细的操作日志与错误处理
+
+  Resolves or creates directory paths
+  - Supports full path resolution
+  - Automatically creates non-existent directories
+  - Supports pipeline input
+  - Provides detailed operation logging & error handling
+
 ### 图像处理 | Image Processing
 - `Edit-Pictures`: 批量处理图片文件 | Batch process image files
   - 支持设置 JPG/PNG 的 PPI | Supports setting PPI for JPG/PNG
@@ -92,6 +104,12 @@ Edit-Pictures -trans -no_ppi
 ma -jpg -ppi 300
 ```
 
+### 解析并创建路径 | Resolve and Create Directories
+```powershell
+# 获取 '..\New_Folder' 的完全限定路径，然后生成它（如果原本不存在） | Get fully qualified path of '..\New_Folder' , then create the folder if it doesn't exist.
+Resolve-OrCreateDirectory -Path '..\New_Folder'
+```
+
 ### 视频转码 | Video Transcoding
 ```powershell
 # 以 12Mbps 的码率转码当前目录的视频 | Transcode videos in current directory at 12Mbps bitrate
@@ -124,6 +142,7 @@ Set-WindowsFeatureState -FeatureId 41415841
 
 ## 更新日志 | Changelog
 
+- 25-04-24 | 添加 Resolve-OrCreateDirectory 函数，并以此改进了Convert-Videos函数的逻辑 | Resolve-OrCreateDirectory function has been added, and Convert-Videos function has been improved.
 - 25-04-22 | 检查并移除了未被翻译的中文。 | Untransalted Chinese has been replaced.
 - 25-04-21 | 注释和帮助信息已翻译为英文。 | Comments and help information has been translated to English.
 

@@ -19,7 +19,8 @@
 . "${PSScriptRoot}\private\Update-IPLog.ps1"
 . "${PSScriptRoot}\public\Test-IPChange.ps1"
 
-# The function for converting videos.
+# The functions for converting videos.
+. "${PSScriptRoot}\public\Resolve-OrCreateDirectory.ps1"
 . "${PSScriptRoot}\public\Convert-Videos.ps1"
 
 # The function for flattening directory structures.

@@ -12,7 +12,7 @@
 RootModule = 'Hanluica-Functions.psm1'
 
 # Version number of this module.
-ModuleVersion = '5.0.0'
+ModuleVersion = '7.0.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -78,6 +78,7 @@ FunctionsToExport = @(
     "Set-VMPortProxy",
     "Show-LatestIPLog",
     "Test-IPChange",
+    "Resolve-OrCreateDirectory",
     "Convert-Videos",
     "Move-SubdirFiles",
     "Set-WindowsAppsAcl",
