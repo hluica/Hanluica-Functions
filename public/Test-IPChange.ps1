@@ -35,6 +35,8 @@
     System log source: IPCheck
     System log EventID: 1001
     Event log source can be created if it is not detected. This requires administrator privileges.
+.LINK
+    https://github.com/Hanluica-Functions
 #>
 function Test-IPChange {
     [CmdletBinding()]

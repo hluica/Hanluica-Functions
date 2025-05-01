@@ -25,6 +25,8 @@
     PowerShell Version: 7
     Requires administrator privileges.
     ⚠️ WARNING: Modifying system folder ownership and permissions carries potential risks. Use with caution.
+.LINK
+    https://github.com/Hanluica-Functions
 #>
 function Set-WindowsAppsAcl {
     [CmdletBinding()]

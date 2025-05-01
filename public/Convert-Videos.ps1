@@ -25,7 +25,9 @@
     - Does not process subdirectories recursively
     - Supported input formats: mp4, mkv, avi, mov, wmv, webm
     - Output format: mp4.
-    - ❗ May not preserve subtitles, chapters, and other container-specific features
+    - ❗ May not preserve subtitles, chapters, and other container-specific features.
+.LINK
+    https://github.com/Hanluica-Functions
 #>
 function Convert-Videos {
     [CmdletBinding()]
@@ -53,7 +55,7 @@ function Convert-Videos {
     # Validate DestinationPath
     $resolvedDestPath = Resolve-OrCreateDirectory -Path $DestinationPath
     if (-not $resolvedDestPath) {
-        # If the Resolve-OrCreateDirectory function fails, it will return $null, which leads us to return.
+        # If the Resolve-OrCreateDirectory function fails, it will return $null, in which case we should return.
         return
     }
     $DestinationPath = $resolvedDestPath
@@ -63,7 +65,7 @@ function Convert-Videos {
     try {
         $ffmpeg = Get-Command "ffmpeg.exe" -CommandType Application -ErrorAction Stop
         $ffmpegPath = $ffmpeg.Source
-        Write-Verbose "Using FFMPEG found at: '$ffmpegPath'"
+        Write-Host "🔍 Found FFMPEG executable file at: '$ffmpegPath'" -ForegroundColor Blue
     }
     catch [System.Management.Automation.CommandNotFoundException] {
         Write-Error "FFMPEG not found. Please ensure ffmpeg.exe exists and its location is included in the PATH environment variable."

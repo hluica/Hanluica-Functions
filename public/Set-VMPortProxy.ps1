@@ -22,6 +22,8 @@
     - Port must be manually specified
     - Supports pipeline input
     - This function configures IPv6 to IPv4 port proxy, ensure IPv6 address is available
+.LINK
+    https://github.com/Hanluica-Functions
 #>
 function Set-VMPortProxy {
     [CmdletBinding()]

@@ -13,6 +13,8 @@
     Returns a list of IP addresses for the virtual machine.
 .NOTES
     Requires Hyper-V Administrator privileges.
+.LINK
+    https://github.com/Hanluica-Functions
 #>
 function Get-VMIPAddress {
     [CmdletBinding()]

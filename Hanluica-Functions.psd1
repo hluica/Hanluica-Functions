@@ -12,7 +12,7 @@
 RootModule = 'Hanluica-Functions.psm1'
 
 # Version number of this module.
-ModuleVersion = '7.0.0'
+ModuleVersion = '7.5.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()

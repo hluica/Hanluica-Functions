@@ -18,6 +18,8 @@
     3. vEthernet (Default Switch)
     4. Other interfaces
     5. Unknown interfaces
+.LINK
+    https://github.com/Hanluica-Functions
 #>
 function Show-LatestIPLog {
     $logPath = "$Env:OneDrive\ip_log.json"

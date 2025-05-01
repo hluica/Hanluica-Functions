@@ -14,6 +14,8 @@
     - It is recommended to back up important files before execution.
     - If filename conflicts occur, the target file will be automatically overwritten.
     - Alias: flatmv
+.LINK
+    https://github.com/Hanluica-Functions
 #>
 function Move-SubdirFiles {
     [CmdletBinding()]

@@ -142,6 +142,7 @@ Set-WindowsFeatureState -FeatureId 41415841
 
 ## 更新日志 | Changelog
 
+- 25-05-01 | 改进Set-WindowsFeatureState函数，当无Feature ID被修改时不再复查ID状态 | Set-WindowsFeatureState has been updated to skip the final status check if no feature IDs were actually enabled.
 - 25-04-24 | 添加 Resolve-OrCreateDirectory 函数，并以此改进了Convert-Videos函数的逻辑 | Resolve-OrCreateDirectory function has been added, and Convert-Videos function has been improved.
 - 25-04-22 | 检查并移除了未被翻译的中文。 | Untransalted Chinese has been replaced.
 - 25-04-21 | 注释和帮助信息已翻译为英文。 | Comments and help information has been translated to English.

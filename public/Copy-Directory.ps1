@@ -13,18 +13,26 @@
     Creates empty folder structure from C:\SourceFolder to D:\DestFolder.
 .NOTES
     Alias: cpdir
+.LINK
+    https://github.com/Hanluica-Functions
 #>
 function Copy-Directory {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true,
-                   Position = 0,
-                   ValueFromPipeline = $true)]
-        [ValidateScript({Test-Path $_ -PathType Container})]
+        [Parameter(
+            Mandatory = $true,
+            Position = 0,
+            ValueFromPipeline = $true
+        )]
+        [ValidateScript({
+            Test-Path $_ -PathType Container
+        })]
         [String] $Path,
 
-        [Parameter(Mandatory = $true,
-                   Position = 1)]
+        [Parameter(
+            Mandatory = $true,
+            Position = 1
+        )]
         [ValidateNotNullOrEmpty()]
         [String] $Destination
     )

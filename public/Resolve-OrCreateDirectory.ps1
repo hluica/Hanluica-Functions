@@ -28,6 +28,8 @@
     # Creates multiple directories using pipeline input
     C:\Temp\Folder1
     C:\Temp\Folder2
+.LINK
+    https://github.com/Hanluica-Functions
 #>
 function Resolve-OrCreateDirectory {
     [CmdletBinding()]
