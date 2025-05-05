@@ -26,6 +26,20 @@ This module includes the following main features:
   Flattens current directory structure: moves files from subdirectories to current directory, using subdirectory names as prefixes.
   - Only considers depth-1 structure, i.e., only one level of subdirectories.
 
+- `Limit-StringLength`: 限制字符串长度，超长时使用省略号
+  - 支持单个或多个字符串输入
+  - 支持管道输入
+  - 自动计算截断位置，保持显示效果
+  - 最小长度为15字符
+  - 输出格式为"前缀...后缀"
+
+  Limits string length by replacing middle part with ellipsis
+  - Supports single or multiple string inputs
+  - Supports pipeline input 
+  - Auto-calculates truncation points for balanced display
+  - Minimum length is 15 characters
+  - Output format is "prefix...suffix"
+
 - `Resolve-OrCreateDirectory`: 解析或创建目录路径
   - 支持解析完整路径
   - 自动创建不存在的目录
@@ -92,7 +106,20 @@ Copy-Directory -Path "C:\SourceFolder" -Destination "D:\DestFolder"
 cpdir -Path "C:\SourceFolder" -Destination "D:\DestFolder"
 ```
 
-### 处理图片 | Process Images
+### 解析并创建路径 | Resolve and Create Directories
+```powershell
+# 获取 '..\New_Folder' 的完全限定路径，然后生成它（如果原本不存在） | Get fully qualified path of '..\New_Folder' , then create the folder if it doesn't exist.
+Resolve-OrCreateDirectory -Path '..\New_Folder'
+```
+
+### 字符串处理 | String Truncation
+```powershell
+# 限制单个字符串长度 | Limit single string length
+"This is a very long string" | Limit-StringLength -MaxLength 20
+# Output: This is a...ng string
+```
+
+### 处理图片 | Image Processing
 ```powershell
 # 设置所有 JPG 和 PNG 文件的 PPI | Set PPI for all JPG and PNG files
 Edit-Pictures -all -ppi 144
@@ -102,12 +129,6 @@ Edit-Pictures -trans -no_ppi
 
 # 使用别名处理单个格式 | Use alias to process single format
 ma -jpg -ppi 300
-```
-
-### 解析并创建路径 | Resolve and Create Directories
-```powershell
-# 获取 '..\New_Folder' 的完全限定路径，然后生成它（如果原本不存在） | Get fully qualified path of '..\New_Folder' , then create the folder if it doesn't exist.
-Resolve-OrCreateDirectory -Path '..\New_Folder'
 ```
 
 ### 视频转码 | Video Transcoding
@@ -134,6 +155,12 @@ Test-IPChange -ShowChange
 Show-LatestIPLog
 ```
 
+### WindowsApps 文件夹权限管理 | WindowsApps folder permission granting
+```powershell
+# 以管理员权限运行powershell，然后运行函数即可 | Run powersell as administrator, then type the function name.
+Set-WindowsAppsAcl
+```
+
 ### Windows 功能管理 | Windows Feature Management
 ```powershell
 # 管理 Windows 功能开关 | Manage Windows feature flags
@@ -142,11 +169,14 @@ Set-WindowsFeatureState -FeatureId 41415841
 
 ## 更新日志 | Changelog
 
-- 25-05-01 | 改进Set-WindowsFeatureState函数，当无Feature ID被修改时不再复查ID状态 | Set-WindowsFeatureState has been updated to skip the final status check if no feature IDs were actually enabled.
-- 25-04-24 | 添加 Resolve-OrCreateDirectory 函数，并以此改进了Convert-Videos函数的逻辑 | Resolve-OrCreateDirectory function has been added, and Convert-Videos function has been improved.
-- 25-04-22 | 检查并移除了未被翻译的中文。 | Untransalted Chinese has been replaced.
-- 25-04-21 | 注释和帮助信息已翻译为英文。 | Comments and help information has been translated to English.
+| Date | 更新 | Updates |
+| ---- | ---- | ------- |
+| 25-05-05 | 添加 Limit-StringLength 函数，用于处理长文本的显示效果，并以此改进了 Set-Images 函数的进度显示 | Limit-StringLength function has been added for formatting long text display, and the process bar of Set-Images function has been improved. |
+| 25-05-01 | 改进 Set-WindowsFeatureState 函数，当无 Feature ID 被修改时不再复查 ID 状态 | Set-WindowsFeatureState function has been updated to skip the final status check if no feature IDs were actually enabled. |
+| 25-04-24 | 添加 Resolve-OrCreateDirectory 函数，并以此改进了 Convert-Videos 函数的逻辑 | Resolve-OrCreateDirectory function has been added, and Convert-Videos function has been improved. |
+| 25-04-22 | 检查并移除了未被翻译的中文。 | Untransalted Chinese has been replaced. |
+| 25-04-21 | 注释和帮助信息已翻译为英文。 | Comments and help information has been translated to English. |
 
 ## 许可证 | License
 
-MIT License - 见 [LICENSE](LICENSE) 文件 | See [LICENSE](LICENSE) file
+MIT License - See [LICENSE](LICENSE)

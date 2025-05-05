@@ -3,6 +3,9 @@
 # The function for copying directory structures.
 . "${PSScriptRoot}\public\Copy-Directory.ps1"
 
+# The function for truncating strings.
+. "${PSScriptRoot}\public\Limit-StringLength.ps1"
+
 # The functions for editing pictures.
 . "${PSScriptRoot}\private\Format-TimeSpan.ps1"
 . "${PSScriptRoot}\private\Set-Images.ps1"

@@ -11,11 +11,10 @@ function Set-Images {
     )
 
     # verbose ANSI color codes
-    $esc       = [char]27
-    $yellow    = "$esc[33m"
-    $fuchsia   = "$esc[35m"
-    $underline = "$esc[4m"
-    $reset     = "$esc[0m"
+    $yellow    = "`e[33m"
+    $fuchsia   = "`e[35m"
+    $underline = "`e[4m"
+    $reset     = "`e[0m"
 
     $count = 0
     foreach ($file in $Files) {
@@ -23,7 +22,7 @@ function Set-Images {
         try {
             & $ProcessBlock $file
             Write-Progress -Activity $Activity -Id $ProgressId `
-                -Status "${count} / $($Files.Count) - $($file.Name)" `
+                -Status "${count} / $($Files.Count) - $(Limit-StringLength -InputStrings $file.Name -MaxLength 15)" `
                 -PercentComplete ($count / $Files.Count * 100)
         } catch {
             $basicErrorOutput = "Error processing file '$($file.FullName)': $($_.Exception.Message)" # for error stream
