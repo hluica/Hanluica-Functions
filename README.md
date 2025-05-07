@@ -171,6 +171,7 @@ Set-WindowsFeatureState -FeatureId 41415841
 
 | Date | 更新 | Updates |
 | ---- | ---- | ------- |
+| 25-05-07 | 添加 ImageProcessingTask 类，重构 Edit-Pictures 函数以使用该类，移除不再需要的辅助函数；更新 Format-TimeSpan 函数 | ImageProcessingTask class has been added, and Edit-Pictures function has been refactored with the class. Format-TimeSpan function has been updated |
 | 25-05-05 | 添加 Limit-StringLength 函数，用于处理长文本的显示效果，并以此改进了 Set-Images 函数的进度显示 | Limit-StringLength function has been added for formatting long text display, and the process bar of Set-Images function has been improved. |
 | 25-05-01 | 改进 Set-WindowsFeatureState 函数，当无 Feature ID 被修改时不再复查 ID 状态 | Set-WindowsFeatureState function has been updated to skip the final status check if no feature IDs were actually enabled. |
 | 25-04-24 | 添加 Resolve-OrCreateDirectory 函数，并以此改进了 Convert-Videos 函数的逻辑 | Resolve-OrCreateDirectory function has been added, and Convert-Videos function has been improved. |
