@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Processes image files to set PPI values and convert between formats.
+Processes image files to set PPI values and convert between formats using an object-oriented approach.
 .DESCRIPTION
 The Edit-Pictures cmdlet provides batch processing capabilities for image files, including:
 - Setting PPI (Pixels Per Inch) values for JPG and PNG files
@@ -22,9 +22,12 @@ Processes images for transparency:
 - Converts JPG files to PNG format
 - Optionally sets PPI for both converted and existing PNG files
 .PARAMETER no_ppi
-Skip PPI setting for PNG files. Only affects the -trans parameter.
+Skip PPI setting.
+- For -trans: Skips PPI setting for existing PNGs and for JPGs converted to PNG.
+- For -webp: (Implicitly) WebP conversion to PNG preserves original PPI by default.
+- For -jpg, -png, -all: If specified with these, it means preserve original PPI instead of setting a new one.
 .PARAMETER ppi
-Specifies the target PPI value. Default is 144. Must be greater than 0.
+Specifies the target PPI value. Default is 144. Must be greater than 0. Ignored if -linear or -no_ppi (for relevant operations) is used.
 .EXAMPLE
 Edit-Pictures -jpg -ppi 300
 Sets the PPI of all JPG files in the current directory and subdirectories to 300.
@@ -33,16 +36,17 @@ Edit-Pictures -all -ppi 144
 Sets the PPI of all JPG and PNG files to 144.
 .EXAMPLE
 Edit-Pictures -trans -no_ppi
-Converts JPG files to PNG without modifying PPI values of any files.
+Converts JPG files to PNG, preserving their original PPI. Existing PNG files are not touched regarding PPI.
 .EXAMPLE
 Edit-Pictures -linear
 Sets PPI values for all images based on their width using a linear calculation.
+.EXAMPLE
+Edit-Pictures -jpg -no_ppi
+Processes JPG files but preserves their original PPI instead of setting a new one.
 .NOTES
 Alias: ma
 Requires ImageSharpProcessorLib for image processing operations, and .NET 9 for supporting the library.
 The library is included in the Module, but .NET runtime isn't.
-.LINK
-https://github.com/Hanluica-Functions
 #>
 function Edit-Pictures {
     [CmdletBinding(DefaultParameterSetName = 'SingleFormat')]
@@ -59,165 +63,147 @@ function Edit-Pictures {
         [switch]$linear,
         [Parameter(ParameterSetName = 'BatchProcess')]
         [switch]$trans,
-        [switch]$no_ppi, # Applicable only to -trans
+        [switch]$no_ppi, 
         [int]$ppi = 144
     )
 
-    # Validate PPI input
-    if ($ppi -le 0) {
-        Write-Error "PPI value must be greater than 0."
+    if ($ppi -le 0 -and !$linear -and !$no_ppi) {
+        Write-Error "PPI value must be greater than 0 when setting a specific PPI."
         return
     }
 
-    Write-Host "Scanning for image files..." -ForegroundColor Cyan
+    Write-Host "`nScanning for image files..." -ForegroundColor Cyan
     [System.IO.FileInfo[]]$jpgfiles = Get-ChildItem -Path . -Recurse -Include *.jpg, *.jpeg -File
     [System.IO.FileInfo[]]$pngfiles = Get-ChildItem -Path . -Recurse -Include *.png -File
     [System.IO.FileInfo[]]$webpfiles = Get-ChildItem -Path . -Recurse -Include *.webp -File
-    Write-Host "Found $($jpgfiles.Count) JPG, $($pngfiles.Count) PNG, $($webpfiles.Count) WEBP files." -ForegroundColor Yellow
+    Write-Host "Found $($jpgfiles.Count) JPG, $($pngfiles.Count) PNG, $($webpfiles.Count) WEBP files." -ForegroundColor Cyan
 
-    $Script:StopWatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $overallStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $tasksToRun = [System.Collections.Generic.List[ImageProcessingTask]]::new()
+    $progressIdCounter = 0
+
+    # This flag is for the C# ProcessImage's 'no_ppi' parameter.
+    # It's true if PowerShell's -no_ppi is present AND we are NOT using -linear.
+    # If -linear is true, the C# library ignores 'no_ppi' and 'ppi' value.
+    $effectivePreservePpiForCSharp = if ($linear) { $false } else { $no_ppi.IsPresent }
 
     switch ($PSCmdlet.ParameterSetName) {
         'SingleFormat' {
-            switch ($true) {
-                $jpg {
-                    if ($jpgfiles.Count -gt 0) {
-                        Invoke-ImageProcess -Files $jpgfiles -Activity "Setting JPG PPI to $ppi..." `
-                            -ProcessBlock {
-                                param($f)
-                                # Call ProcessImage: Keep format JPG, use fixed PPI, don't use linear, set PPI
-                                [ImageSharpProcessorLib.ImageProcessor]::ProcessImage($f.FullName, $false, $false, $false, $ppi)
-                            }
-                    }
+            if ($jpg) {
+                $config = @{
+                    ConvertToPng        = $false
+                    UseLinearPpi        = $linear.IsPresent
+                    PreserveOriginalPpi = $effectivePreservePpiForCSharp
+                    PpiValue            = $ppi
                 }
-                $png {
-                     if ($pngfiles.Count -gt 0) {
-                        Invoke-ImageProcess -Files $pngfiles -Activity "Setting PNG PPI to $ppi..." `
-                            -ProcessBlock {
-                                param($f)
-                                # Call ProcessImage: Keep format PNG, use fixed PPI, don't use linear, set PPI
-                                [ImageSharpProcessorLib.ImageProcessor]::ProcessImage($f.FullName, $false, $false, $false, $ppi)
-                            }
-                     }
+                $activityLabel = "Processing JPGs (PPI: $($config.UseLinearPpi ? 'Linear' : ($config.PreserveOriginalPpi ? 'Original' : $config.PpiValue)))"
+                $tasksToRun.Add([ImageProcessingTask]::new($jpgfiles, $activityLabel, $config, $progressIdCounter++))
+            }
+            if ($png) {
+                $config = @{
+                    ConvertToPng        = $false
+                    UseLinearPpi        = $linear.IsPresent
+                    PreserveOriginalPpi = $effectivePreservePpiForCSharp
+                    PpiValue            = $ppi
                 }
-                $webp {
-                    if ($webpfiles.Count -gt 0) {
-                        # Note: This is used only to convert WebP to PNG, not to set PPI
-                        # But the ProcessImage() method DO HAVE ability to set PPI.
-                        Invoke-ImageProcess -Files $webpfiles -Activity "Converting WEBP to PNG (PPI unchanged)..." `
-                            -ProcessBlock {
-                                param($f)
-                                # Call ProcessImage: Convert to PNG, don't use linear, DO NOT set PPI
-                                [ImageSharpProcessorLib.ImageProcessor]::ProcessImage($f.FullName, $true, $false, $true, $ppi)
-                            }
-                    }
+                $activityLabel = "Processing PNGs (PPI: $($config.UseLinearPpi ? 'Linear' : ($config.PreserveOriginalPpi ? 'Original' : $config.PpiValue)))"
+                $tasksToRun.Add([ImageProcessingTask]::new($pngfiles, $activityLabel, $config, $progressIdCounter++))
+            }
+            if ($webp) {
+                $config = @{
+                    ConvertToPng        = $true
+                    UseLinearPpi        = $false # Linear not applicable for WebP to PNG direct conversion intent
+                    PreserveOriginalPpi = $true   # WebP to PNG conversion should preserve PPI by default
+                    PpiValue            = $ppi    # Passed but ignored by C# if PreserveOriginalPpi is true
                 }
+                $tasksToRun.Add([ImageProcessingTask]::new($webpfiles, "Converting WEBP to PNG (PPI preserved)", $config, $progressIdCounter++))
             }
         }
         'BatchProcess' {
-            switch ($true) {
-                $all {
-                    if ($jpgfiles.Count -gt 0) {
-                        Invoke-ImageProcess -Files $jpgfiles -Activity "Setting JPG PPI to $ppi..." -ProgressId 0 `
-                            -ProcessBlock {
-                                param($f)
-                                # Call ProcessImage: Keep format JPG, use fixed PPI, don't use linear, set PPI
-                                [ImageSharpProcessorLib.ImageProcessor]::ProcessImage($f.FullName, $false, $false, $false, $ppi)
-                            }
-                    }
-                    if ($pngfiles.Count -gt 0) {
-                        Invoke-ImageProcess -Files $pngfiles -Activity "Setting PNG PPI to $ppi..." -ProgressId 1 `
-                            -ProcessBlock {
-                                param($f)
-                                # Call ProcessImage: Keep format PNG, use fixed PPI, don't use linear, set PPI
-                                [ImageSharpProcessorLib.ImageProcessor]::ProcessImage($f.FullName, $false, $false, $false, $ppi)
-                            }
-                    }
+            if ($all) {
+                $jpgConfig = @{
+                    ConvertToPng        = $false
+                    UseLinearPpi        = $linear.IsPresent
+                    PreserveOriginalPpi = $effectivePreservePpiForCSharp
+                    PpiValue            = $ppi
                 }
-                $linear {
-                    # Combine JPG and PNG for processing
-                    $pics = @(($jpgfiles + $pngfiles) | Where-Object { $_ -is [System.IO.FileInfo] })
-                    if ($pics.Count -gt 0) {
-                         Invoke-ImageProcess -Files $pics -Activity "Setting verbose PPI based on width..." `
-                            -ProcessBlock {
-                                param($f)
-                                # Call ProcessImage: Keep original format, use linear PPI calc, set PPI
-                                [ImageSharpProcessorLib.ImageProcessor]::ProcessImage($f.FullName, $false, $true, $false, $ppi) # $ppi value ignofuchsia when linear=true
-                            }
-                    }
+                $jpgActivity = "Processing JPGs (PPI: $($jpgConfig.UseLinearPpi ? 'Linear' : ($jpgConfig.PreserveOriginalPpi ? 'Original' : $jpgConfig.PpiValue)))"
+                $tasksToRun.Add([ImageProcessingTask]::new($jpgfiles, $jpgActivity, $jpgConfig, $progressIdCounter++))
+
+                $pngConfig = @{
+                    ConvertToPng        = $false
+                    UseLinearPpi        = $linear.IsPresent
+                    PreserveOriginalPpi = $effectivePreservePpiForCSharp
+                    PpiValue            = $ppi
                 }
-                $trans {
-                    # Process PNG files first (only if -no_ppi is NOT specified)
-                    if (-not $no_ppi) {
-                        if ($pngfiles.Count -gt 0) {
-                            Invoke-ImageProcess -Files $pngfiles -Activity "Setting PNG PPI to $ppi..." -ProgressId 1 `
-                                -ProcessBlock {
-                                    param($f)
-                                    # Call ProcessImage: Keep format PNG, use fixed PPI, don't use linear, set PPI
-                                    [ImageSharpProcessorLib.ImageProcessor]::ProcessImage($f.FullName, $false, $false, $false, $ppi)
-                                }
-                        }
-                    } else {
-                         Write-Host "Skipping PPI setting for PNG files." -ForegroundColor Cyan
-                    }
-                    # Process JPG files (convert to PNG, optionally set PPI)
-                    if ($jpgfiles.Count -gt 0) {
-                        $activity = if ($no_ppi) { "Converting JPG to PNG (PPI unchanged)..." } else { "Converting JPG to PNG and setting PPI to $ppi..." }
-                        Invoke-ImageProcess -Files $jpgfiles -Activity $activity -ProgressId 2 `
-                            -ProcessBlock {
-                                param($f)
-                                # Call ProcessImage: Convert to PNG, don't use linear, set PPI based on $no_ppi flag
-                                [ImageSharpProcessorLib.ImageProcessor]::ProcessImage($f.FullName, $true, $false, $no_ppi, $ppi)
-                            }
-                    }
+                $pngActivity = "Processing PNGs (PPI: $($pngConfig.UseLinearPpi ? 'Linear' : ($pngConfig.PreserveOriginalPpi ? 'Original' : $pngConfig.PpiValue)))"
+                $tasksToRun.Add([ImageProcessingTask]::new($pngfiles, $pngActivity, $pngConfig, $progressIdCounter++))
+            }
+            if ($linear -and !$all) { # If -all is present, linear logic is already incorporated above.
+                $allImageFiles = @($jpgfiles + $pngfiles | Where-Object { $_ -is [System.IO.FileInfo] })
+                $config = @{
+                    ConvertToPng        = $false
+                    UseLinearPpi        = $true
+                    PreserveOriginalPpi = $false # When linear is true, C# ignores this
+                    PpiValue            = $ppi    # When linear is true, C# ignores this
                 }
+                $tasksToRun.Add([ImageProcessingTask]::new($allImageFiles, "Processing JPG/PNG (PPI: Linear)", $config, $progressIdCounter++))
+            }
+            if ($trans) {
+                # 1. Process existing PNG files (set PPI unless -no_ppi for this step)
+                if (-not $no_ppi) { # PowerShell's -no_ppi applies here
+                    $pngTransConfig = @{
+                        ConvertToPng        = $false
+                        UseLinearPpi        = $false # Not linear for this specific step
+                        PreserveOriginalPpi = $false # We want to set PPI
+                        PpiValue            = $ppi
+                    }
+                    $tasksToRun.Add([ImageProcessingTask]::new($pngfiles, "Setting PPI for existing PNGs to $ppi", $pngTransConfig, $progressIdCounter++))
+                } else {
+                    Write-Host "Skipping PPI setting for existing PNG files (due to -no_ppi with -trans)." -ForegroundColor Cyan
+                }
+
+                # 2. Convert JPG to PNG (PPI setting depends on -no_ppi for this step)
+                $jpgToPngConfig = @{
+                    ConvertToPng        = $true
+                    UseLinearPpi        = $false # Not linear for this specific step
+                    PreserveOriginalPpi = $no_ppi.IsPresent # C# no_ppi is PowerShell's -no_ppi for this conversion
+                    PpiValue            = $ppi
+                }
+                $jpgToPngActivity = if ($jpgToPngConfig.PreserveOriginalPpi) { "Converting JPG to PNG (PPI preserved)" } else { "Converting JPG to PNG (PPI: $($jpgToPngConfig.PpiValue))" }
+                $tasksToRun.Add([ImageProcessingTask]::new($jpgfiles, $jpgToPngActivity, $jpgToPngConfig, $progressIdCounter++))
             }
         }
     }
 
-    # Final time reported by Invoke-ImageProcess if it ran, otherwise report here if no files processed.
-    $Script:StopWatch.Stop()
-    if ($Script:StopWatch.IsRunning) { $Script:StopWatch.Stop() }
-
-    # Special case where Invoke-ImageProcess might not have run.
-    if (
-        (($PSCmdlet.ParameterSetName -eq 'SingleFormat') -and $webp) -and
-        ($webpfiles.Count -eq 0)
-    ) {
-        Format-TimeSpan -TimeSpan $Script:StopWatch.Elapsed
-    }
-    elseif (
-        (($PSCmdlet.ParameterSetName -eq 'BatchProcess') -and $all) -and
-        (($jpgfiles.Count -eq 0) -and ($pngfiles.Count -eq 0))
-    ) {
-        Format-TimeSpan -TimeSpan $Script:StopWatch.Elapsed
-    }
-    elseif (
-        (($PSCmdlet.ParameterSetName -eq 'BatchProcess') -and $complex) -and
-        (($jpgfiles.Count -eq 0) -and ($pngfiles.Count -eq 0))
-    ) {
-        Format-TimeSpan -TimeSpan $Script:StopWatch.Elapsed
-    }
-    elseif (
-        (($PSCmdlet.ParameterSetName -eq 'BatchProcess') -and $trans) -and
-        ($jpgfiles.Count -eq 0) -and ($no_ppi -or ($pngfiles.Count -eq 0)) # chekc jpgs first, then check pngs, but only necessary if no_ppi is not set
-    ) {
-        Format-TimeSpan -TimeSpan $Script:StopWatch.Elapsed
+    $anyTaskExecuted = $false
+    if ($tasksToRun.Count -gt 0) {
+        foreach ($task in $tasksToRun) {
+            $task.Execute()
+            if ($task.GetWasExecuted()) {
+                $anyTaskExecuted = $true
+            }
+        }
+    } else {
+        Write-Host "No image processing tasks were configured to run." -ForegroundColor Yellow
     }
 
-    # Check for errors and processing status
-    $hasErrors = (
-        ($Error.Count -gt 0) -or 
-        ($Global:Error.Count -gt 0 )
-    )
+    $overallStopwatch.Stop()
+    if ($tasksToRun.Count -eq 0 -or $anyTaskExecuted) {
+         Format-TimeSpan -TimeSpan $overallStopwatch.Elapsed -Label "Total Script Runtime"
+    }
+
+    $hasErrors = ($Error.Count -gt 0) 
+    if ($Global:Error.Count -gt 0) { $hasErrors = $true }
 
     if ($hasErrors) {
-        Write-Host "Processing did not complete normally." -ForegroundColor Red
-    } else {
-        Write-Host "Image processing complete." -ForegroundColor Green
+        Write-Host "Processing completed with one or more errors." -ForegroundColor Red
+    } elseif ($anyTaskExecuted) {
+        Write-Host "All image processing tasks complete." -ForegroundColor Green
+    } elseif ($tasksToRun.Count -gt 0 -and -not $anyTaskExecuted) {
+        Write-Host "Image processing tasks were configured, but no files were processed (e.g., no matching files found)." -ForegroundColor Yellow
     }
 
-    # Clear errors for next run
     if ($Error) { $Error.Clear() }
     if ($Global:Error) { $Global:Error.Clear() }
 }

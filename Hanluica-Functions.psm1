@@ -8,8 +8,7 @@
 
 # The functions for editing pictures.
 . "${PSScriptRoot}\private\Format-TimeSpan.ps1"
-. "${PSScriptRoot}\private\Set-Images.ps1"
-. "${PSScriptRoot}\private\Invoke-ImageProcess.ps1"
+. "${PSScriptRoot}\class\ImageProcessingTask.ps1"
 . "${PSScriptRoot}\public\Edit-Pictures.ps1"
 
 # The functions for managing VMs.
