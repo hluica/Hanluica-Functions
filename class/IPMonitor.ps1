@@ -56,7 +56,7 @@ class IPMonitor {
     #endregion Constructor
 
     #region Private Helper Methods
-    hidden _EnsureEventLogSource() {
+    hidden [void] _EnsureEventLogSource() {
         if (-not [System.Diagnostics.EventLog]::SourceExists($this.EventLogSource)) {
             try {
                 New-EventLog -LogName $this.EventLogName -Source $this.EventLogSource -ErrorAction Stop
@@ -68,7 +68,7 @@ class IPMonitor {
         }
     }
 
-    hidden _EnsureLogDirectory() {
+    hidden [void] _EnsureLogDirectory() {
         $LogDir = Split-Path $this.LogFile -Parent
         if (-not (Test-Path $LogDir)) {
             try {
@@ -82,7 +82,7 @@ class IPMonitor {
         }
     }
 
-    hidden WriteToEventLog([string]$Message, [string]$EntryType = 'Error') {
+    hidden [void] WriteToEventLog([string]$Message, [string]$EntryType = 'Error') {
         # Ensure source exists before attempting to write, though constructor should handle it.
         if ([System.Diagnostics.EventLog]::SourceExists($this.EventLogSource)) {
             try {
@@ -136,7 +136,7 @@ class IPMonitor {
         return @() # Return empty array if file doesn't exist or is invalid
     }
 
-    hidden WriteLogHistory([IPLogRecord[]]$LogHistory) {
+    hidden [void] WriteLogHistory([IPLogRecord[]]$LogHistory) {
         # Convert IPLogRecord objects to a structure that ConvertTo-Json handles well (PSCustomObject-like)
         $serializableHistory = $LogHistory | ForEach-Object {
             [PSCustomObject]@{
