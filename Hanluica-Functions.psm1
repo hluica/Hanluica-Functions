@@ -16,9 +16,8 @@
 . "${PSScriptRoot}\public\Set-VMPortProxy.ps1"
 
 # The functions for testing and logging IP changes.
-. "${PSScriptRoot}\private\Format-IPInfo.ps1"
+. "${PSScriptRoot}\class\IPMonitor.ps1"
 . "${PSScriptRoot}\public\Show-LatestIPLog.ps1"
-. "${PSScriptRoot}\private\Update-IPLog.ps1"
 . "${PSScriptRoot}\public\Test-IPChange.ps1"
 
 # The functions for converting videos.

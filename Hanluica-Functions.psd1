@@ -12,7 +12,7 @@
 RootModule = 'Hanluica-Functions.psm1'
 
 # Version number of this module.
-ModuleVersion = '9.0.0'
+ModuleVersion = '10.0.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -120,7 +120,7 @@ PrivateData = @{
         # LicenseUri = ''
 
         # A URL to the main website for this project.
-        # ProjectUri = ''
+        ProjectUri = 'https://github.com/Hanluica-Functions'
 
         # A URL to an icon representing this module.
         # IconUri = ''

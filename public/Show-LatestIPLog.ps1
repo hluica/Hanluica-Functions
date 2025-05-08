@@ -22,23 +22,11 @@
     https://github.com/Hanluica-Functions
 #>
 function Show-LatestIPLog {
-    $logPath = "$Env:OneDrive\ip_log.json"
-
     try {
-        $logContent = Get-Content -Path $logPath -Raw | ConvertFrom-Json
-        $latestLog = $logContent[0]
-        $logTime = [DateTime]::ParseExact($latestLog.TimeStamp, "yyyy-MM-dd HH:mm:ss", $null)
-        $timeDiff = (Get-Date) - $logTime
-        
-        Write-Host "`n===================== Time Information =====================" -ForegroundColor Cyan
-        Write-Host "Record Time: $($latestLog.TimeStamp)"
-        Write-Host "Time Since: $([math]::Floor($timeDiff.TotalHours)) h $($timeDiff.Minutes) min"
-        
-        Write-Host "`n================== Network Interface Info ==================" -ForegroundColor Cyan
-        Format-IPInfo -IPInfo $latestLog.IPInfo
-        Write-Host "============================================================" -ForegroundColor Cyan
+        $monitor = [IPMonitor]::new()
+        $monitor.ShowLatestIPLogInfo()
     }
     catch {
-        Write-Error "Error occurred while reading or processing IP log: $_"
+        Write-Error "Failed to initialize IP Monitor for Show-LatestIPLog: $_"
     }
 }
