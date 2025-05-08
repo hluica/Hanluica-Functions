@@ -28,10 +28,10 @@ class IPMonitor {
     [string]    $EventLogName
     [int]       $MaxLogEntries
     [hashtable] $InterfaceSortOrder
-    static [string] $DEFAULT_ERROR_ACTION = 'Continue'
+    static [string] $DEFAULT_ERROR_ACTION        = 'Continue'
     static [string] $DEFAULT_PROGRESS_PREFERENCE = 'Continue'
-    static [string] $DEFAULT_WARNING_PREFERENCE = 'Continue'
-    static [string] $SILENT_PREFERENCE = 'SilentlyContinue'
+    static [string] $DEFAULT_WARNING_PREFERENCE  = 'Continue'
+    static [string] $SILENT_PREFERENCE           = 'SilentlyContinue'
     #endregion Properties
 
     #region Constructor
@@ -42,7 +42,7 @@ class IPMonitor {
         $this.MaxLogEntries = 100
         $this.InterfaceSortOrder = @{
             'WLAN'                       = 1
-            'Ethernet'                   = 2
+            '以太网'                     = 2 # the display language of my system is Chinese, so I have to use Chinese name in which powershell can recognize the adapter.
             'vEthernet (Default Switch)' = 3
             '<Unknown Interface>'        = 5
         }
@@ -98,53 +98,97 @@ class IPMonitor {
     }
 
     hidden [IPAddressDetail[]] GetCurrentSystemIPInfo() {
-        $currentIPs = Get-NetIPAddress |
-        Where-Object { $_.AddressFamily -in ('IPv4', 'IPv6') -and $_.IPAddress -notmatch '^(fe80|::1|127\.)' } |
-        Select-Object @{
-            Name       = 'Interface'
-            Expression = {
-                $adapter = Get-NetAdapter -InterfaceIndex $_.InterfaceIndex -ErrorAction SilentlyContinue
-                if ($adapter) { $adapter.Name } else { "<Unknown Interface>" }
-            }
-        }, IPAddress | ForEach-Object {
-            [IPAddressDetail]::new($_.Interface, $_.IPAddress)
+        # Get the names' list of network adapters
+        $adapterMap = @{}
+        Get-NetAdapter | ForEach-Object {
+            $adapterMap[$_.InterfaceIndex] = $_.Name
         }
-        return $currentIPs
+    
+        # Get the list of IP addresses
+        $validIPs = Get-NetIPAddress | Where-Object {
+            $_.AddressFamily -in ('IPv4', 'IPv6') -and 
+            $_.IPAddress -notmatch '^(fe80|::1|127\.)'
+        }
+    
+        # Map IP addresses to their respective interfaces, leave unknowns as "<Unknown Interface>"
+        $ipDetails = $validIPs | ForEach-Object {
+            $interfaceName = $adapterMap[$_.InterfaceIndex] ?? "<Unknown Interface>"
+            [IPAddressDetail]::new($interfaceName, $_.IPAddress)
+        }
+    
+        return $ipDetails
+    }
+
+    hidden [IPAddressDetail[]] ConvertToIPDetails($ipInfoArray) {
+        return (
+            $ipInfoArray |
+            ForEach-Object { 
+                [IPAddressDetail]::new($_.Interface, $_.IPAddress) 
+            }
+        )
+    }
+
+    hidden [array] ConvertToSerializableHistory([IPLogRecord[]]$LogHistory) {
+        $serializedRecords = foreach ($record in $LogHistory) {
+            $serializedIPInfo = foreach ($ip in $record.IPInfo) {
+                @{
+                    Interface = $ip.Interface
+                    IPAddress = $ip.IPAddress
+                }
+            }
+    
+            @{
+                TimeStamp = $record.TimeStamp
+                IPInfo = $serializedIPInfo
+            }
+        }
+    
+        return $serializedRecords
     }
 
     hidden [IPLogRecord[]] ReadLogHistory() {
-        if (Test-Path $this.LogFile) {
-            try {
-                $logData = Get-Content $this.LogFile -Raw | ConvertFrom-Json -ErrorAction Stop
-                if ($logData -is [array]) {
-                    # Convert plain objects from JSON back to IPLogRecord and IPAddressDetail
-                    return ($logData | ForEach-Object {
-                            $ipDetails = $_.IPInfo | ForEach-Object { [IPAddressDetail]::new($_.Interface, $_.IPAddress) }
-                            [IPLogRecord]::new($_.TimeStamp, $ipDetails)
-                        })
-                }
-                elseif ($logData) {
-                    $ipDetails = $logData.IPInfo | ForEach-Object { [IPAddressDetail]::new($_.Interface, $_.IPAddress) }
-                    return @([IPLogRecord]::new($logData.TimeStamp, $ipDetails))
-                }
-            }
-            catch {
-                Write-Warning "Failed to read or parse log file '$($this.LogFile)': $_. Assuming empty history."
-                # Optionally, attempt to backup corrupted log file here
-            }
+        if (-not (Test-Path $this.LogFile)) { # Unable to get log file. Assuming empty history.
+            return @()
         }
-        return @() # Return empty array if file doesn't exist or is invalid
+    
+        try {
+            $logData = Get-Content $this.LogFile -Raw | ConvertFrom-Json
+            # Empty history case
+            if (-not $logData) {
+                return @()
+            }
+            # Single record case
+            if ($logData -isnot [array]) {
+                $ipDetails = $this.ConvertToIPDetails($logData.IPInfo)
+                return @([IPLogRecord]::new($logData.TimeStamp, $ipDetails))
+            }
+            # Multiple records case
+            return (
+                $logData |
+                ForEach-Object {
+                    $ipDetails = $this.ConvertToIPDetails($_.IPInfo)
+                    [IPLogRecord]::new($_.TimeStamp, $ipDetails)
+                }
+            )
+        }
+        catch {
+            Write-Warning "Failed to read or parse log file '$($this.LogFile)': $_. `nAssuming empty history."
+            return @()
+        }
     }
 
     hidden [void] WriteLogHistory([IPLogRecord[]]$LogHistory) {
-        # Convert IPLogRecord objects to a structure that ConvertTo-Json handles well (PSCustomObject-like)
-        $serializableHistory = $LogHistory | ForEach-Object {
-            [PSCustomObject]@{
-                TimeStamp = $_.TimeStamp
-                IPInfo    = ($_.IPInfo | ForEach-Object { [PSCustomObject]@{ Interface = $_.Interface; IPAddress = $_.IPAddress } })
-            }
+        $serializableHistory = $this.ConvertToSerializableHistory($LogHistory)
+    
+        try {
+            ConvertTo-Json -InputObject $serializableHistory -Depth 10 |
+            Set-Content -Path $this.LogFile -Encoding UTF8
         }
-        $serializableHistory | ConvertTo-Json -Depth 10 | Set-Content -Path $this.LogFile -Encoding UTF8 -ErrorAction Stop
+        catch {
+            $errorMessage = "Failed to write log history: $_"
+            $this.WriteToEventLog($errorMessage, 'Error')
+            throw $errorMessage
+        }
     }
     #endregion Private Helper Methods
 
