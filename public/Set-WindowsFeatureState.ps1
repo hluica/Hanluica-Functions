@@ -61,8 +61,19 @@ function Set-WindowsFeatureState {
         [string]$ViveToolPath = "vivetool.exe" # Defaults to assuming it's in PATH
     )
 
-    # --- 0. Verify if ViveTool is executable ---
-    Write-Verbose "🔄️ Checking if ViveTool.exe is available..."
+    # --- 0.1 Check for Administrator Privileges ---
+    Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Checking for administrator privileges..."
+    try {
+        Test-AdminPrivilege -Mode Force
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Administrator privileges confirmed."
+    } catch {
+        Write-Error $_.Exception.Message
+        if ($Host.Name -eq 'ConsoleHost') { Read-Host "Press Enter key to terminate execution" }
+        return
+    }
+
+    # --- 0.2 Verify if ViveTool is executable ---
+    Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Checking if ViveTool.exe is available..."
     $viveToolExecutable = Get-Command $ViveToolPath -ErrorAction SilentlyContinue
     if (-not $viveToolExecutable) {
         Write-Error "Error: Cannot find ViveTool.exe at path '${ViveToolPath}' or in the system PATH."
@@ -70,10 +81,10 @@ function Set-WindowsFeatureState {
         return # Terminate function execution
     }
     $viveToolFullPath = $viveToolExecutable.Source
-    Write-Verbose "🔄️ Found ViveTool.exe: ${viveToolFullPath}"
+    Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Found ViveTool.exe: ${viveToolFullPath}"
 
-    # --- 0.5. Validate and process Feature IDs ---
-    Write-Verbose "🔄️ Parsing and validating Feature IDs..."
+    # --- 0.3 Validate and process Feature IDs ---
+    Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Parsing and validating Feature IDs..."
     $processedIds = [System.Collections.Generic.List[string]]::new()
     $invalidIdsFound = $false
 
@@ -88,7 +99,7 @@ function Set-WindowsFeatureState {
                 if ($trimmedId -match '^\d+$') {
                     if (-not $processedIds.Contains($trimmedId)) { # Avoid adding duplicates
                        $processedIds.Add($trimmedId)
-                       Write-Verbose "   -> Parsed valid ID: $trimmedId"
+                       Write-Verbose "[$($MyInvocation.MyCommand.Name)]    -> Parsed valid ID: $trimmedId"
                     }
                 } else {
                     Write-Error "Error: Found invalid Feature ID format: '$trimmedId'. ID should only contain numbers."
@@ -118,7 +129,7 @@ function Set-WindowsFeatureState {
     # --- 1. Initial Status Check ---
     Write-Host "🛠️ [Step 1/4] Checking initial ID status" -ForegroundColor Blue
     $queryArgs = "/query /id:${validIdStringForViveTool}"
-    Write-Verbose "🔄️ Executing command: $viveToolFullPath $queryArgs"
+    Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Executing command: $viveToolFullPath $queryArgs"
 
     if ($WhatIfPreference) {
         Write-Host "What if: Performing the operation `"Query feature(s) status via ViveTool`" on target `"Feature ID(s): ${validIdStringForViveTool}`"."
@@ -180,7 +191,7 @@ function Set-WindowsFeatureState {
 
         if ($PSCmdlet.ShouldProcess("Feature ID(s): ${enableIdString}", "Enable feature(s) via ViveTool")) {
             $enableArgs = "/enable /id:${enableIdString}"
-            Write-Verbose "🔄️ Executing command: $viveToolFullPath $enableArgs"
+            Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Executing command: $viveToolFullPath $enableArgs"
             try {
                 $tempPrefixB = [System.IO.Path]::GetTempFileName()
                 $enableOutput = "${tempPrefixB}.enable.tmp"
@@ -228,7 +239,7 @@ function Set-WindowsFeatureState {
     if ($enableAttempted) {
         Write-Host "🛠️ [Step 4/4] Re-checking final status of all initial IDs (since changes were attempted)" -ForegroundColor Blue
         $queryArgsFinal = "/query /id:$validIdStringForViveTool" # Reuse the string containing all valid IDs
-        Write-Verbose "🔄️ Executing command: $viveToolFullPath $queryArgsFinal"
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Executing command: $viveToolFullPath $queryArgsFinal"
         try {
             $tempPrefixC = [System.IO.Path]::GetTempFileName()
             $queryOutputFinal = "${tempPrefixC}.query.tmp"

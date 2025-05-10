@@ -14,6 +14,10 @@ All public functions come with detailed English help documentation (Get-Help).
 
 This module includes the following main features:
 
+### 管理员权限检测 | Administrator Privilege Check
+
+- `Test-AdminPrivilege`: 检测当前 PowerShell 会话是否具有管理员权限 | Check if current PowerShell session has administrator privileges
+
 ### 文件系统操作 | File System Operations
 - `Copy-Directory`: 复制目录结构（不包含文件）
   
@@ -99,6 +103,12 @@ Import-Module Hanluica-Functions
 
 ## 使用示例 | Usage Examples
 
+### 管理员权限检测 | Administrator Privilege Check
+```powershell
+# 检测当前 PowerShell 会话是否具有管理员权限 | Check if current PowerShell session has administrator privileges
+Test-AdminPrivilege
+```
+
 ### 复制目录结构 | Copy Directory Structure
 ```powershell
 Copy-Directory -Path "C:\SourceFolder" -Destination "D:\DestFolder"
@@ -171,6 +181,7 @@ Set-WindowsFeatureState -FeatureId 41415841
 
 | Date | 更新 | Updates |
 | ---- | ---- | ------- |
+| 25-05-11 | 添加 Test-AdminPrivilege 函数，修正几个函数的 Write-Verbose 信息 | Test-AdminPrivilege function has been added, and Write-Verbose information of some functions has been fixed |
 | 25-05-08 | 添加 IPMonitor 类和几个辅助类，重构 Show-IPAddress 和 Test-IPChange 函数以使用这些类，移除不再需要的函数 | IPMonitor class and some helper classes have been added, and Show-IPAddress & Test-IPChange have been refactored with the classes |
 | 25-05-07 | 添加 ImageProcessingTask 类，重构 Edit-Pictures 函数以使用该类，移除不再需要的辅助函数；更新 Format-TimeSpan 函数 | ImageProcessingTask class has been added, and Edit-Pictures function has been refactored with the class. Format-TimeSpan function has been updated |
 | 25-05-05 | 添加 Limit-StringLength 函数，用于处理长文本的显示效果，并以此改进了 Set-Images 函数的进度显示 | Limit-StringLength function has been added for formatting long text display, and the process bar of Set-Images function has been improved. |

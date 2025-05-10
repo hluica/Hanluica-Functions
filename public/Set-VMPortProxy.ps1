@@ -37,9 +37,13 @@ function Set-VMPortProxy {
     )
 
     begin {
-        $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-        if (-not $isAdmin) {
-            Write-Error "This function requires administrator privileges. Please run PowerShell as administrator."
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Checking for administrator privileges..."
+        try {
+            Test-AdminPrivilege -Mode Force
+            Write-Verbose "[$($MyInvocation.MyCommand.Name)] Administrator privileges confirmed."
+        } catch {
+            Write-Error $_.Exception.Message
+            if ($Host.Name -eq 'ConsoleHost') { Read-Host "Press Enter key to terminate execution" }
             return
         }
     }
@@ -48,7 +52,7 @@ function Set-VMPortProxy {
         foreach ($ip in $IPAddress) {
             try {
                 $command = "netsh interface portproxy set v6tov4 listenport=$Port listenaddress=:: connectport=$Port connectaddress=$ip"
-                Write-Verbose "Executing command: $command"
+                Write-Verbose "[$($MyInvocation.MyCommand.Name)] Executing command: $command"
                 Invoke-Expression $command | Out-Null
                 
                 if ($LASTEXITCODE -eq 0) {

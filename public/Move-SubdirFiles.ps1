@@ -22,9 +22,13 @@ function Move-SubdirFiles {
     param()
 
     # Check if running with administrator privileges
-    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-    if (-not $isAdmin) {
-        Write-Warning "⚠️ Script might require administrator privileges to run correctly"
+    if (-not (Test-AdminPrivilege -Mode Silent)) {
+        Write-Host @"
+⚠️ Administrator privileges may be required
+   if you don't have sufficient permissions
+   to access or modify files in the target paths.
+   Some operations might fail if access denied.
+"@ -ForegroundColor Blue
     }
 
     $currentPath = Get-Location

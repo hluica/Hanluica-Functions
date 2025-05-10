@@ -39,47 +39,44 @@ function Resolve-OrCreateDirectory {
     )
 
     process {
-        $resolvedPath = $null
-        $finalPath = $null
+        $absolutePath = $null
 
         try {
             # 1. Resolve path to fully qualified path
-            Write-Verbose "Attempting to resolve path: '$Path'"
-            $resolvedPathInfo = Resolve-Path -Path $Path -ErrorAction Stop
-            $resolvedPath = $resolvedPathInfo.Path
-            Write-Verbose "Resolved path to: '$resolvedPath'"
+            Write-Verbose "[$($MyInvocation.MyCommand.Name)] Attempting to resolve path: '$Path'"
+            if ([System.IO.Path]::IsPathRooted($Path)) {
+                $absolutePath = $Path
+            } else {
+                $absolutePath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PWD.Path, $Path))
+            }
+            Write-Verbose "[$($MyInvocation.MyCommand.Name)] Resolved to absolute path: '$absolutePath'"
 
             # 2. Check if path exists and verify its type
-            if (Test-Path -Path $resolvedPath) {
-                Write-Verbose "Path '$resolvedPath' exists."
-                # Check if it's a file
-                if (Test-Path -Path $resolvedPath -PathType Leaf) {
+            if (Test-Path -Path $absolutePath) {
+                Write-Verbose "[$($MyInvocation.MyCommand.Name)] Path '$absolutePath' exists."
+                if (Test-Path -Path $absolutePath -PathType Leaf) { # If it's a file...
                     # If it's a file, throw an error
-                    throw "The specified path '$resolvedPath' exists, but it is a file, not a directory."
-                } elseif (Test-Path -Path $resolvedPath -PathType Container) {
+                    throw "The specified path '$absolutePath' exists, but it is a file, not a directory."
+                } elseif (Test-Path -Path $absolutePath -PathType Container) { # If it's a directory...
                     # If it's a directory, this is what we want
-                    Write-Verbose "Path '$resolvedPath' is an existing directory."
-                    $finalPath = $resolvedPath
-                } else {
-                    # Path exists but type is unknown or unsupported (e.g., Junction Point, which might need additional handling)
+                    Write-Verbose "[$($MyInvocation.MyCommand.Name)] Path '$absolutePath' is an existing directory."
+                } else { # If path exists but type is unknown or unsupported, e.g., Junction Point...
                     # For most cases, if it's not a Leaf, assume it's Container-like
-                    Write-Warning "Path '$resolvedPath' exists but its type is not explicitly 'Container'. Assuming it's directory-like."
-                    $finalPath = $resolvedPath
+                    Write-Warning "Path '$absolutePath' exists but its type is not explicitly 'Container'. Assuming it's directory-like."
                 }
             } else {
                 # 3. Path doesn't exist, create the directory
-                Write-Verbose "Path '$resolvedPath' does not exist. Creating directory..."
-                New-Item -ItemType Directory -Path $resolvedPath -Force -ErrorAction Stop | Out-Null
-                Write-Verbose "Successfully created directory '$resolvedPath'."
-                $finalPath = $resolvedPath
+                Write-Verbose "[$($MyInvocation.MyCommand.Name)] Path '$absolutePath' does not exist. Creating directory..."
+                New-Item -ItemType Directory -Path $absolutePath -Force -ErrorAction Stop | Out-Null
+                Write-Verbose "[$($MyInvocation.MyCommand.Name)] Successfully created directory '$absolutePath'."
             }
 
             # 4. Return the final fully qualified path
-            Write-Output $finalPath
+            Write-Output $absolutePath
 
         } catch {
             # 5. Get more specific error information
-            $errorMessage = "Error processing path '$Path' (resolved to '$resolvedPath'): $($_.Exception.Message)"
+            $errorMessage = "Error processing path '$Path' (resolved to '$absolutePath'): $($_.Exception.Message)"
             Write-Error $errorMessage
         }
     }

@@ -160,7 +160,7 @@ function Edit-Pictures {
                     }
                     $tasksToRun.Add([ImageProcessingTask]::new($pngfiles, "Setting PPI for existing PNGs to $ppi", $pngTransConfig, $progressIdCounter++))
                 } else {
-                    Write-Host "Skipping PPI setting for existing PNG files (due to -no_ppi with -trans)." -ForegroundColor Cyan
+                    Write-Host "Skipping PPI setting for existing PNG files (due to -no_ppi with -trans)." -ForegroundColor Yellow
                 }
 
                 # 2. Convert JPG to PNG (PPI setting depends on -no_ppi for this step)

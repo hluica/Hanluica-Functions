@@ -25,8 +25,8 @@ function Copy-Directory {
             ValueFromPipeline = $true
         )]
         [ValidateScript({
-            Test-Path $_ -PathType Container
-        })]
+                Test-Path $_ -PathType Container
+            })]
         [String] $Path,
 
         [Parameter(
@@ -36,30 +36,34 @@ function Copy-Directory {
         [ValidateNotNullOrEmpty()]
         [String] $Destination
     )
+
+    # Check if running with administrator privileges
+    if (-not (Test-AdminPrivilege -Mode Silent)) {
+        Write-Host @"
+⚠️ Administrator privileges may be required
+   if you don't have sufficient permissions
+   to access or modify files in the target paths.
+   Some operations might fail if access denied.
+"@ -ForegroundColor Yellow
+    }
+
     
     try {
-        # Resolve full paths
-        $Path = (Resolve-Path -Path $Path).Path
-        
-        # Create destination if it doesn't exist
-        if (!(Test-Path -Path $Destination)) {
-            New-Item -Path $Destination -ItemType Directory -Force | Out-Null
-        }
-        $Destination = (Resolve-Path -Path $Destination).Path
+        # Resolve full paths using Resolve-OrCreateDirectory
+        $Path = Resolve-OrCreateDirectory -Path $Path
+        $Destination = Resolve-OrCreateDirectory -Path $Destination
 
         # Get all subdirectories
         $SourceDirs = Get-ChildItem -Path $Path -Recurse -Directory
-        
+    
         # Create directory structure
         foreach ($dir in $SourceDirs) {
             $DestinationDir = $dir.FullName.Replace($Path, $Destination)
-            if (!(Test-Path -Path $DestinationDir)) {
-                New-Item -Path $DestinationDir -ItemType Directory -Force | Out-Null
-                Write-Verbose "Created directory: $DestinationDir"
-            }
+            Resolve-OrCreateDirectory -Path $DestinationDir | Out-Null
+            Write-Verbose "[$($MyInvocation.MyCommand.Name)] Created directory: $DestinationDir"
         }
-        
-        Write-Verbose "Directory structure copied successfully"
+    
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Directory structure copied successfully"
     }
     catch {
         Write-Error "Failed to copy directory structure: $_"

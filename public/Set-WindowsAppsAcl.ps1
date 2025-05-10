@@ -44,13 +44,14 @@ function Set-WindowsAppsAcl {
 
     # 1. Verify administrator privileges
     Write-Host "🛠️ Check 1/5: Checking for administrator privileges." -ForegroundColor Magenta
-    $currentUserPrincipal = [System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()
-    if (-not $currentUserPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        Write-Error "This script requires administrator privileges. Please run PowerShell as an administrator."
+    try {
+        Test-AdminPrivilege -Mode Force
+        Write-Host "✅ Administrator privileges confirmed." -ForegroundColor Green
+    } catch {
+        Write-Error $_.Exception.Message
         if ($Host.Name -eq 'ConsoleHost') { Read-Host "Press Enter key to terminate execution" }
-        return 1
+        return
     }
-    Write-Host "✅ Administrator privileges check passed." -ForegroundColor Green
 
     # 2. Get current user identity and TrustedInstaller account object
     Write-Host "🛠️ Check 2/5: Getting user identity information." -ForegroundColor Magenta
