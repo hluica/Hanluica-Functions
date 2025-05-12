@@ -37,17 +37,6 @@ function Copy-Directory {
         [String] $Destination
     )
 
-    # Check if running with administrator privileges
-    if (-not (Test-AdminPrivilege -Mode Silent)) {
-        Write-Host @"
-⚠️ Administrator privileges may be required
-   if you don't have sufficient permissions
-   to access or modify files in the target paths.
-   Some operations might fail if access denied.
-"@ -ForegroundColor Yellow
-    }
-
-    
     try {
         # Resolve full paths using Resolve-OrCreateDirectory
         $Path = Resolve-OrCreateDirectory -Path $Path

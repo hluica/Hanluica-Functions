@@ -181,6 +181,7 @@ Set-WindowsFeatureState -FeatureId 41415841
 
 | Date | 更新 | Updates |
 | ---- | ---- | ------- |
+| 25-05-12 | 更新 ImageProcessingTask 类，更改 Edit-Pictures 函数的错误处理方法 | ImageProcessingTask class has been updated, and Edit-Pictures function's error handling method has been changed |
 | 25-05-11 | 添加 Test-AdminPrivilege 函数，修正几个函数的 Write-Verbose 信息 | Test-AdminPrivilege function has been added, and Write-Verbose information of some functions has been fixed |
 | 25-05-08 | 添加 IPMonitor 类和几个辅助类，重构 Show-IPAddress 和 Test-IPChange 函数以使用这些类，移除不再需要的函数 | IPMonitor class and some helper classes have been added, and Show-IPAddress & Test-IPChange have been refactored with the classes |
 | 25-05-07 | 添加 ImageProcessingTask 类，重构 Edit-Pictures 函数以使用该类，移除不再需要的辅助函数；更新 Format-TimeSpan 函数 | ImageProcessingTask class has been added, and Edit-Pictures function has been refactored with the class. Format-TimeSpan function has been updated |

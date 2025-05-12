@@ -1,31 +1,37 @@
-class ImageProcessingTask {
-    [System.IO.FileInfo[]]$Files
-    [string]$Activity
-    [int]$ProgressId
-    [System.Diagnostics.Stopwatch]$Stopwatch
-    [bool]$WasExecuted = $false
+using namespace System.IO
+using namespace System.Collections.Generic
+using namespace System.Management.Automation
+using namespace System.Diagnostics
 
+class ImageProcessingTask {
+    [FileInfo[]]        $Files
+    [string]            $Activity
+    [int]               $ProgressId
+    [Stopwatch]         $Stopwatch
+    [bool]              $WasExecuted = $false
+    [List[ErrorRecord]] $Errors = [List[ErrorRecord]]::new()
+    
     # Configuration properties
-    [bool]$ConvertToPng
-    [bool]$UseLinearPpi
-    [bool]$PreserveOriginalPpi # Corresponds to the 'no_ppi' flag in ImageSharpProcessorLib.ProcessImage
-    [int]$PpiValue
+    [bool] $ConvertToPng
+    [bool] $UseLinearPpi
+    [bool] $PreserveOriginalPpi # Corresponds to the 'no_ppi' flag in ImageSharpProcessorLib.ProcessImage
+    [int]  $PpiValue
 
     ImageProcessingTask(
-        [System.IO.FileInfo[]]$InputFiles,
+        [FileInfo[]]$InputFiles,
         [string]$ActivityDescription,
         [hashtable]$ProcessingConfig, # Configuration object
         [int]$ProgressIdentifier = 0
     ) {
-        $this.Files = $InputFiles
-        $this.Activity = $ActivityDescription
+        $this.Files      = $InputFiles
+        $this.Activity   = $ActivityDescription
         $this.ProgressId = $ProgressIdentifier
-        $this.Stopwatch = [System.Diagnostics.Stopwatch]::new()
+        $this.Stopwatch  = [Stopwatch]::new()
 
         # Extract configuration from the hashtable
         # Default to $false if key is not present or value evaluates to $false
-        $this.ConvertToPng = [bool]$ProcessingConfig.ConvertToPng
-        $this.UseLinearPpi = [bool]$ProcessingConfig.UseLinearPpi
+        $this.ConvertToPng        = [bool]$ProcessingConfig.ConvertToPng
+        $this.UseLinearPpi        = [bool]$ProcessingConfig.UseLinearPpi
         $this.PreserveOriginalPpi = [bool]$ProcessingConfig.PreserveOriginalPpi
         
         # PpiValue should ideally always be provided by Edit-Pictures, which has a default.
@@ -41,21 +47,16 @@ class ImageProcessingTask {
 
     [void] Execute() {
         if (-not $this.Files -or $this.Files.Count -eq 0) {
-            Write-Verbose "No files to process for activity: $($this.Activity)"
+            Write-Verbose "[$($MyInvocation.MyCommand.Name)] No files to process for activity: $($this.Activity)"
             return
         }
 
         $this.Stopwatch.Start()
         $this.WasExecuted = $true
 
-        $yellow    = "`e[33m"
-        $fuchsia   = "`e[35m"
-        $underline = "`e[4m"
-        $reset     = "`e[0m"
-        
         $count = 0
 
-        Write-Host "Starting task: $($this.Activity)" -ForegroundColor Cyan
+        Write-Host "Starting task: $($this.Activity)" -ForegroundColor Magenta
 
         foreach ($file in $this.Files) {
             $count++
@@ -73,14 +74,7 @@ class ImageProcessingTask {
                     -Status ("{0} / {1} - {2}" -f $count, $this.Files.Count, (Limit-StringLength -InputStrings $file.Name -MaxLength 15)) `
                     -PercentComplete ($count / $this.Files.Count * 100)
             } catch {
-                $basicErrorOutput = "Error processing file '$($file.FullName)': $($_.Exception.Message)"
-                $verboseErrorOutput = @"
-❗ ${yellow}ERROR PROCESSING FILE!${reset}
-   ${yellow}File   : ${underline}$($file.FullName)${reset}
-   ${yellow}Message: ${reset}${fuchsia}$($_.Exception.Message)${reset}
-"@
-                Write-Error -Message $basicErrorOutput -ErrorAction SilentlyContinue
-                Write-Host $verboseErrorOutput
+                $this.Errors.Add($_.ErrorRecord)
             }
         }
         Write-Progress -Activity $this.Activity -Id $this.ProgressId -Completed
@@ -94,5 +88,18 @@ class ImageProcessingTask {
 
     [TimeSpan] GetElapsedTime() {
         return $this.Stopwatch.Elapsed
+    }
+
+    [bool] HasErrors() {
+        return ($this.Errors.Count -gt 0)
+    }
+
+    [string] GetErrorSummary() {
+        $ErrorSummary = (
+            $this.Errors `
+            | ForEach-Object { "- Error '$($_.Exception.Message)' in file '$($_.TargetObject)'" } `
+            | Out-String
+        )
+        return $ErrorSummary
     }
 }

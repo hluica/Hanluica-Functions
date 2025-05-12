@@ -21,16 +21,6 @@ function Move-SubdirFiles {
     [CmdletBinding()]
     param()
 
-    # Check if running with administrator privileges
-    if (-not (Test-AdminPrivilege -Mode Silent)) {
-        Write-Host @"
-⚠️ Administrator privileges may be required
-   if you don't have sufficient permissions
-   to access or modify files in the target paths.
-   Some operations might fail if access denied.
-"@ -ForegroundColor Blue
-    }
-
     $currentPath = Get-Location
     $dirs = Get-ChildItem -Directory
     Write-Host "🛠️ Starting processing...`n   Number of subdirectories to process: $($dirs.Count)" -ForegroundColor Magenta

@@ -113,8 +113,8 @@ function Edit-Pictures {
                 $config = @{
                     ConvertToPng        = $true
                     UseLinearPpi        = $false # Linear not applicable for WebP to PNG direct conversion intent
-                    PreserveOriginalPpi = $true   # WebP to PNG conversion should preserve PPI by default
-                    PpiValue            = $ppi    # Passed but ignored by C# if PreserveOriginalPpi is true
+                    PreserveOriginalPpi = $true  # WebP to PNG conversion should preserve PPI by default
+                    PpiValue            = $ppi   # Passed but ignored by C# if PreserveOriginalPpi is true
                 }
                 $tasksToRun.Add([ImageProcessingTask]::new($webpfiles, "Converting WEBP to PNG (PPI preserved)", $config, $progressIdCounter++))
             }
@@ -145,7 +145,7 @@ function Edit-Pictures {
                     ConvertToPng        = $false
                     UseLinearPpi        = $true
                     PreserveOriginalPpi = $false # When linear is true, C# ignores this
-                    PpiValue            = $ppi    # When linear is true, C# ignores this
+                    PpiValue            = $ppi   # When linear is true, C# ignores this
                 }
                 $tasksToRun.Add([ImageProcessingTask]::new($allImageFiles, "Processing JPG/PNG (PPI: Linear)", $config, $progressIdCounter++))
             }
@@ -193,11 +193,14 @@ function Edit-Pictures {
          Format-TimeSpan -TimeSpan $overallStopwatch.Elapsed -Label "Total Script Runtime"
     }
 
-    $hasErrors = ($Error.Count -gt 0) 
-    if ($Global:Error.Count -gt 0) { $hasErrors = $true }
+    $tasksWithErrors = $tasksToRun | Where-Object { $_.HasErrors() }
 
-    if ($hasErrors) {
-        Write-Host "Processing completed with one or more errors." -ForegroundColor Red
+    if ($tasksWithErrors.Count -gt 0) {
+        Write-Host "`nWarning: Processing completed with one or more errors." -ForegroundColor Red
+        foreach ($task in $tasksWithErrors) {
+            Write-Host "`nWhen $($task.Activity):"
+            Write-Host $task.GetErrorSummary() -ForegroundColor Yellow
+        }
     } elseif ($anyTaskExecuted) {
         Write-Host "All image processing tasks complete." -ForegroundColor Green
     } elseif ($tasksToRun.Count -gt 0 -and -not $anyTaskExecuted) {
