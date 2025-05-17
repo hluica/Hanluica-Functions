@@ -1,3 +1,6 @@
+using namespace System.Security.AccessControl
+using namespace System.Security.Principal
+
 <#
 .SYNOPSIS
     Checks and grants the current user 'Read and Execute' permissions for the WindowsApps folder.
@@ -56,17 +59,17 @@ function Set-WindowsAppsAcl {
     # 2. Get current user identity and TrustedInstaller account object
     Write-Host "🛠️ Check 2/5: Getting user identity information." -ForegroundColor Magenta
     try {
-        $currentUserIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+        $currentUserIdentity = [WindowsIdentity]::GetCurrent()
         $userAccountName = $currentUserIdentity.Name # User full name, e.g., "COMPUTERNAME\Username"
         $userSid = $currentUserIdentity.User # User SID
         Write-Host "ℹ️ Current user: ${userAccountName}`n   SID: $($userSid.Value))" -ForegroundColor Blue
 
-        $tiSidObject = [System.Security.Principal.SecurityIdentifier]$trustedInstallerSid
-        $tiAccount = $tiSidObject.Translate([System.Security.Principal.NTAccount])
+        $tiSidObject = [SecurityIdentifier]$trustedInstallerSid
+        $tiAccount = $tiSidObject.Translate([NTAccount])
         Write-Host "ℹ️ Current target owner: $($tiAccount.Value)`n   SID: $trustedInstallerSid)" -ForegroundColor Blue
 
-        $adminsGroup = [System.Security.Principal.NTAccount]"BUILTIN\Administrators"
-        $adminsSid = $adminsGroup.Translate([System.Security.Principal.SecurityIdentifier])
+        $adminsGroup = [NTAccount]"BUILTIN\Administrators"
+        $adminsSid = $adminsGroup.Translate([SecurityIdentifier])
         Write-Host "ℹ️ Temporary owner will be set to: $($adminsGroup.Value)`n   SID: $($adminsSid.Value))" -ForegroundColor Blue
     }
     catch {
@@ -85,14 +88,14 @@ function Set-WindowsAppsAcl {
     Write-Host "✅ Target folder is available.`n   Target folder path: ${windowsAppsPath}" -ForegroundColor Green
 
     # --- Define required permission parameters ---
-    $requiredRights = [System.Security.AccessControl.FileSystemRights]::ReadAndExecute # Permission: Read and Execute
-    $requiredInheritance = [System.Security.AccessControl.InheritanceFlags]::ContainerInherit # Inheritance: This folder and subfolders
-    $requiredPropagation = [System.Security.AccessControl.PropagationFlags]::None # Propagation: None
-    $requiredAccessType = [System.Security.AccessControl.AccessControlType]::Allow # Access control type: Allow
+    $requiredRights      = [FileSystemRights]::ReadAndExecute   # Permission: Read and Execute
+    $requiredInheritance = [InheritanceFlags]::ContainerInherit # Inheritance: This folder and subfolders
+    $requiredPropagation = [PropagationFlags]::None             # Propagation: None
+    $requiredAccessType  = [AccessControlType]::Allow           # Access control type: Allow
 
     # --- Main Operations ---
     $originalOwner = $null
-    $acl = $null
+    $acl           = $null
     $ownerRestored = $true
 
     try {
@@ -134,7 +137,7 @@ function Set-WindowsAppsAcl {
 
             # --- b. Add permission rule ---
             Write-Host "🛠️ Step 2/3: Adding 'ReadAndExecute' (ContainerInherit) permission rule..." -ForegroundColor Magenta
-            $newRule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+            $newRule = New-Object FileSystemAccessRule(
                 $userSid,
                 $requiredRights,
                 $requiredInheritance,
@@ -164,7 +167,7 @@ function Set-WindowsAppsAcl {
             Write-Host "🛠️ Step 3/3: Attempting to restore original owner (${originalOwner})." -ForegroundColor Magenta
             try {
                 $aclForRestore = Get-Acl -LiteralPath $windowsAppsPath # Get ACL again, just in case
-                $originalOwnerAccount = New-Object System.Security.Principal.NTAccount($originalOwner)
+                $originalOwnerAccount = New-Object NTAccount($originalOwner)
                 $aclForRestore.SetOwner($originalOwnerAccount)
                 Set-Acl -LiteralPath $windowsAppsPath -AclObject $aclForRestore -ErrorAction Stop
                 $ownerRestored = $true # Mark as restored

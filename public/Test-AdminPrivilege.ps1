@@ -1,3 +1,6 @@
+using namespace System.Management.Automation.Host
+using namespace System.Security.Principal
+
 <#
 .SYNOPSIS
     Tests if the current user has administrator privileges.
@@ -32,11 +35,11 @@ function Test-AdminPrivilege {
     )
 
     # Get the current Windows identity and principal.
-    $windowsIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-    $windowsPrincipal = New-Object System.Security.Principal.WindowsPrincipal($windowsIdentity)
+    $windowsIdentity  = [WindowsIdentity]::GetCurrent()
+    $windowsPrincipal = New-Object WindowsPrincipal($windowsIdentity)
 
     # Check if the current user is in the 'Administrators' built-in role.
-    $isAdmin = $windowsPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+    $isAdmin = $windowsPrincipal.IsInRole([WindowsBuiltInRole]::Administrator)
 
     if ($isAdmin) {
         # If the user has administrator privileges, always return $true.
@@ -54,22 +57,22 @@ function Test-AdminPrivilege {
             "Prompt" {
                 # Prompt mode: Display a warning and ask the user if they want to continue.
                 Write-Warning "Administrator privileges are recommended for this script/operation to function correctly."
-                
+
                 $title = "Permission Warning"
                 $message = "You are not running with administrator privileges. Some operations may fail. Do you want to continue anyway?"
-                
+
                 # Create choice descriptions for Yes/No.
-                $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", "Continue the script without administrator privileges."
-                $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", "Abort the script."
-                $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-                
+                $yes = New-Object ChoiceDescription "&Yes", "Continue the script without administrator privileges."
+                $no = New-Object ChoiceDescription "&No", "Abort the script."
+                $options = [ChoiceDescription[]]($yes, $no)
+
                 # Prompt the user for a choice. Default to 'No'.
                 $userChoice = $Host.UI.PromptForChoice($title, $message, $options, 1) # 1 is the index for 'No'
 
                 if ($userChoice -eq 0) { # User selected "Yes" (index 0)
                     Write-Warning "Continuing without administrator privileges as per user choice."
                     # Return $false to indicate lack of admin rights, but the user opted to proceed.
-                    return $false 
+                    return $false
                 } else { # User selected "No" (index 1) or closed the prompt
                     # Interrupt the caller's code by throwing an error.
                     throw "Execution aborted by user due to lack of administrator privileges."

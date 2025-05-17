@@ -8,13 +8,13 @@
     This parameter supports pipeline input.
 .PARAMETER Port
     Port number to configure. Required, no default value.
-.EXAMPLE    
+.EXAMPLE
     Set-VMPortProxy -IPAddress "192.168.1.100" -Port 2233
     # Configure for a single IP address
-.EXAMPLE 
+.EXAMPLE
     Set-VMPortProxy -IPAddress "192.168.1.100","192.168.1.101" -Port 8080
     # Configure for multiple IP addresses
-.EXAMPLE 
+.EXAMPLE
     Get-VMIPAddress -VMName "Ubuntu-VM" | Set-VMPortProxy -Port 2233
     # Pass IP addresses through pipeline
 .NOTES
@@ -30,7 +30,7 @@ function Set-VMPortProxy {
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
         [string[]]$IPAddress,
-        
+
         [Parameter(Mandatory)]
         [ValidateRange(1, 65535)]
         [int]$Port
@@ -54,7 +54,7 @@ function Set-VMPortProxy {
                 $command = "netsh interface portproxy set v6tov4 listenport=$Port listenaddress=:: connectport=$Port connectaddress=$ip"
                 Write-Verbose "[$($MyInvocation.MyCommand.Name)] Executing command: $command"
                 Invoke-Expression $command | Out-Null
-                
+
                 if ($LASTEXITCODE -eq 0) {
                     Write-Host "Successfully configured port proxy for IP $ip on port $Port." -ForegroundColor Green
                 }

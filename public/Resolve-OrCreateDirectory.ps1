@@ -1,3 +1,5 @@
+using namespace System.IO
+
 <#
 .SYNOPSIS
     Resolves a path and creates the directory if it doesn't exist.
@@ -44,10 +46,10 @@ function Resolve-OrCreateDirectory {
         try {
             # 1. Resolve path to fully qualified path
             Write-Verbose "[$($MyInvocation.MyCommand.Name)] Attempting to resolve path: '$Path'"
-            if ([System.IO.Path]::IsPathRooted($Path)) {
+            if ([Path]::IsPathRooted($Path)) {
                 $absolutePath = $Path
             } else {
-                $absolutePath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PWD.Path, $Path))
+                $absolutePath = [Path]::GetFullPath([Path]::Combine($PWD.Path, $Path))
             }
             Write-Verbose "[$($MyInvocation.MyCommand.Name)] Resolved to absolute path: '$absolutePath'"
 

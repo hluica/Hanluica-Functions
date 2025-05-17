@@ -20,13 +20,13 @@ This module includes the following main features:
 
 ### 文件系统操作 | File System Operations
 - `Copy-Directory`: 复制目录结构（不包含文件）
-  
+
   Copies directory structure (without files)
 
 - `Move-SubdirFiles`: 展平（flatten）当前目录的结构：将子目录中的文件移动到当前目录，并以子目录名作为前缀。
   - 别名 | Alias: `flatmv`
   - 只考虑深度为1的结构，即当前目录中只有一层子目录。
-  
+
   Flattens current directory structure: moves files from subdirectories to current directory, using subdirectory names as prefixes.
   - Only considers depth-1 structure, i.e., only one level of subdirectories.
 
@@ -39,7 +39,7 @@ This module includes the following main features:
 
   Limits string length by replacing middle part with ellipsis
   - Supports single or multiple string inputs
-  - Supports pipeline input 
+  - Supports pipeline input
   - Auto-calculates truncation points for balanced display
   - Minimum length is 15 characters
   - Output format is "prefix...suffix"

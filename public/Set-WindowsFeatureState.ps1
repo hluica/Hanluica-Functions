@@ -1,3 +1,6 @@
+using namespace System.Collections.Generic
+using namespace System.IO
+
 <#
 .SYNOPSIS
 Use ViveTool to query and manage the status of Windows Feature IDs.
@@ -64,7 +67,7 @@ function Set-WindowsFeatureState {
     # --- 0.1 Check for Administrator Privileges ---
     Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Checking for administrator privileges..."
     try {
-        Test-AdminPrivilege -Mode Force
+        Test-AdminPrivilege -Mode Force | Out-Null
         Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Administrator privileges confirmed."
     } catch {
         Write-Error $_.Exception.Message
@@ -76,7 +79,7 @@ function Set-WindowsFeatureState {
     Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Checking if ViveTool.exe is available..."
     $viveToolExecutable = Get-Command $ViveToolPath -ErrorAction SilentlyContinue
     if (-not $viveToolExecutable) {
-        Write-Error "Error: Cannot find ViveTool.exe at path '${ViveToolPath}' or in the system PATH."
+        Write-Error "Cannot find ViveTool.exe at path '${ViveToolPath}' or in the system PATH."
         Write-Error "Please ensure ViveTool.exe exists and the path is correct, or add it to your PATH."
         return # Terminate function execution
     }
@@ -85,7 +88,7 @@ function Set-WindowsFeatureState {
 
     # --- 0.3 Validate and process Feature IDs ---
     Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Parsing and validating Feature IDs..."
-    $processedIds = [System.Collections.Generic.List[string]]::new()
+    $processedIds = [List[string]]::new()
     $invalidIdsFound = $false
 
     # Process the input array, allowing elements to contain comma or space separated IDs
@@ -136,7 +139,7 @@ function Set-WindowsFeatureState {
     } else {
         try {
         # Use unique temporary filenames
-        $tempPrefixA = [System.IO.Path]::GetTempFileName()
+        $tempPrefixA = [Path]::GetTempFileName()
         $queryOutputA = "${tempPrefixA}.query.tmp"
         $queryErrorA = "${tempPrefixA}.query-err.tmp"
 
@@ -163,7 +166,7 @@ function Set-WindowsFeatureState {
 
     # --- 2. Ask individually and collect IDs to enable ---
     Write-Host "🛠️ [Step 2/4] Confirm enable actions" -ForegroundColor Blue
-    $idsToEnable = [System.Collections.Generic.List[string]]::new()
+    $idsToEnable = [List[string]]::new()
     $skipAll = $false
 
     foreach ($id in $validIds) { # Use the validated ID list
@@ -193,7 +196,7 @@ function Set-WindowsFeatureState {
             $enableArgs = "/enable /id:${enableIdString}"
             Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Executing command: $viveToolFullPath $enableArgs"
             try {
-                $tempPrefixB = [System.IO.Path]::GetTempFileName()
+                $tempPrefixB = [Path]::GetTempFileName()
                 $enableOutput = "${tempPrefixB}.enable.tmp"
                 $enableError = "${tempPrefixB}.enable-err.tmp"
 
@@ -241,7 +244,7 @@ function Set-WindowsFeatureState {
         $queryArgsFinal = "/query /id:$validIdStringForViveTool" # Reuse the string containing all valid IDs
         Write-Verbose "[$($MyInvocation.MyCommand.Name)] 🔄️ Executing command: $viveToolFullPath $queryArgsFinal"
         try {
-            $tempPrefixC = [System.IO.Path]::GetTempFileName()
+            $tempPrefixC = [Path]::GetTempFileName()
             $queryOutputFinal = "${tempPrefixC}.query.tmp"
             $queryErrorFinal = "${tempPrefixC}.query-err.tmp"
 

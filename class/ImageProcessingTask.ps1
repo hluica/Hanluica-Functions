@@ -10,7 +10,7 @@ class ImageProcessingTask {
     [Stopwatch]         $Stopwatch
     [bool]              $WasExecuted = $false
     [List[ErrorRecord]] $Errors = [List[ErrorRecord]]::new()
-    
+
     # Configuration properties
     [bool] $ConvertToPng
     [bool] $UseLinearPpi
@@ -33,7 +33,7 @@ class ImageProcessingTask {
         $this.ConvertToPng        = [bool]$ProcessingConfig.ConvertToPng
         $this.UseLinearPpi        = [bool]$ProcessingConfig.UseLinearPpi
         $this.PreserveOriginalPpi = [bool]$ProcessingConfig.PreserveOriginalPpi
-        
+
         # PpiValue should ideally always be provided by Edit-Pictures, which has a default.
         # For robustness, ensure it's an int.
         if ($ProcessingConfig.ContainsKey('PpiValue')) {
@@ -41,7 +41,7 @@ class ImageProcessingTask {
         } else {
             # This case should ideally not be hit if Edit-Pictures is setting defaults correctly.
             Write-Warning "PpiValue not found in ProcessingConfig. Defaulting to 144. This might be unexpected."
-            $this.PpiValue = 144 
+            $this.PpiValue = 144
         }
     }
 

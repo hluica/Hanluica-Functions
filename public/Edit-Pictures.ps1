@@ -1,3 +1,7 @@
+using namespace System.Collections.Generic
+using namespace System.Diagnostics
+using namespace System.IO
+
 <#
 .SYNOPSIS
 Processes image files to set PPI values and convert between formats using an object-oriented approach.
@@ -63,7 +67,7 @@ function Edit-Pictures {
         [switch]$linear,
         [Parameter(ParameterSetName = 'BatchProcess')]
         [switch]$trans,
-        [switch]$no_ppi, 
+        [switch]$no_ppi,
         [int]$ppi = 144
     )
 
@@ -73,13 +77,13 @@ function Edit-Pictures {
     }
 
     Write-Host "`nScanning for image files..." -ForegroundColor Cyan
-    [System.IO.FileInfo[]]$jpgfiles = Get-ChildItem -Path . -Recurse -Include *.jpg, *.jpeg -File
-    [System.IO.FileInfo[]]$pngfiles = Get-ChildItem -Path . -Recurse -Include *.png -File
-    [System.IO.FileInfo[]]$webpfiles = Get-ChildItem -Path . -Recurse -Include *.webp -File
+    [FileInfo[]]$jpgfiles  = Get-ChildItem -Path . -Recurse -Include @("*.jpg", "*.jpeg") -File
+    [FileInfo[]]$pngfiles  = Get-ChildItem -Path . -Recurse -Include *.png -File
+    [FileInfo[]]$webpfiles = Get-ChildItem -Path . -Recurse -Include *.webp -File
     Write-Host "Found $($jpgfiles.Count) JPG, $($pngfiles.Count) PNG, $($webpfiles.Count) WEBP files." -ForegroundColor Cyan
 
-    $overallStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-    $tasksToRun = [System.Collections.Generic.List[ImageProcessingTask]]::new()
+    $overallStopwatch = [Stopwatch]::StartNew()
+    $tasksToRun = [List[ImageProcessingTask]]::new()
     $progressIdCounter = 0
 
     # This flag is for the C# ProcessImage's 'no_ppi' parameter.
@@ -140,7 +144,7 @@ function Edit-Pictures {
                 $tasksToRun.Add([ImageProcessingTask]::new($pngfiles, $pngActivity, $pngConfig, $progressIdCounter++))
             }
             if ($linear -and !$all) { # If -all is present, linear logic is already incorporated above.
-                $allImageFiles = @($jpgfiles + $pngfiles | Where-Object { $_ -is [System.IO.FileInfo] })
+                $allImageFiles = @($jpgfiles + $pngfiles | Where-Object { $_ -is [FileInfo] })
                 $config = @{
                     ConvertToPng        = $false
                     UseLinearPpi        = $true
