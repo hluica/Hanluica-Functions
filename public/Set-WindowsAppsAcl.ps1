@@ -137,7 +137,7 @@ function Set-WindowsAppsAcl {
 
             # --- b. Add permission rule ---
             Write-Host "🛠️ Step 2/3: Adding 'ReadAndExecute' (ContainerInherit) permission rule..." -ForegroundColor Magenta
-            $newRule = New-Object FileSystemAccessRule(
+            $newRule = [System.Security.AccessControl.FileSystemAccessRule]::new( # Here must use the fully qualified name, otherwise it will throw an error.
                 $userSid,
                 $requiredRights,
                 $requiredInheritance,
@@ -185,5 +185,5 @@ function Set-WindowsAppsAcl {
     }
 
     Write-Host "`n--------------------------------------------------------------------" -ForegroundColor Magenta
-    Write-Host "Function execution finished." -ForegroundColor Blue
+    Write-Host "ℹ️ Function execution finished." -ForegroundColor Blue
 }
