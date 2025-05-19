@@ -33,21 +33,16 @@ class ImageProcessingTask {
         $this.ConvertToPng        = [bool]$ProcessingConfig.ConvertToPng
         $this.UseLinearPpi        = [bool]$ProcessingConfig.UseLinearPpi
         $this.PreserveOriginalPpi = [bool]$ProcessingConfig.PreserveOriginalPpi
+        $this.PpiValue            = $ProcessingConfig.ContainsKey('PpiValue') ? [int]$ProcessingConfig.PpiValue : 144
 
-        # PpiValue should ideally always be provided by Edit-Pictures, which has a default.
-        # For robustness, ensure it's an int.
-        if ($ProcessingConfig.ContainsKey('PpiValue')) {
-            $this.PpiValue = [int]$ProcessingConfig.PpiValue
-        } else {
-            # This case should ideally not be hit if Edit-Pictures is setting defaults correctly.
-            Write-Warning "PpiValue not found in ProcessingConfig. Defaulting to 144. This might be unexpected."
-            $this.PpiValue = 144
+        if (-not $ProcessingConfig.ContainsKey('PpiValue')) {
+            Write-Verbose "[ImageProcessingTask] PpiValue not found in ProcessingConfig. Defaulting to 144."
         }
     }
 
     [void] Execute() {
         if (-not $this.Files -or $this.Files.Count -eq 0) {
-            Write-Verbose "[$($MyInvocation.MyCommand.Name)] No files to process for activity: $($this.Activity)"
+            Write-Verbose "[ImageProcessingTask] No files to process for activity: $($this.Activity)"
             return
         }
 
@@ -56,7 +51,7 @@ class ImageProcessingTask {
 
         $count = 0
 
-        Write-Host "Starting task: $($this.Activity)" -ForegroundColor Magenta
+        Write-Host "[ImageProcessingTask] Starting task: $($this.Activity)" -ForegroundColor Blue
 
         foreach ($file in $this.Files) {
             $count++
@@ -79,7 +74,7 @@ class ImageProcessingTask {
         }
         Write-Progress -Activity $this.Activity -Id $this.ProgressId -Completed
         $this.Stopwatch.Stop()
-        Format-TimeSpan -TimeSpan $this.Stopwatch.Elapsed -Label "Task '$($this.Activity)' Runtime"
+        Format-TimeSpan -TimeSpan $this.Stopwatch.Elapsed -Label "[ImageProcessingTask] Task '$($this.Activity)' Runtime"
     }
 
     [bool] GetWasExecuted() {

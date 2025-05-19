@@ -12,7 +12,7 @@
 RootModule = 'Hanluica-Functions.psm1'
 
 # Version number of this module.
-ModuleVersion = '11.1.0'
+ModuleVersion = '12.0.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -79,6 +79,7 @@ FunctionsToExport = @(
     "Move-SubdirFiles",
     "Convert-Videos",
     "Edit-Pictures",
+    "Edit-PicturesParallel",
     "Show-LatestIPLog",
     "Test-IPChange",
     "Get-VMIPAddress",
@@ -97,6 +98,7 @@ VariablesToExport = '*'
 AliasesToExport = @(
     "cpdir",
     "ma",
+    "map",
     "flatmv"
 )
 

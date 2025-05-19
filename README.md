@@ -62,14 +62,28 @@ This module includes the following main features:
   - 支持 WebP 转 PNG | Supports WebP to PNG conversion
   - 支持线性 PPI 计算 | Supports linear PPI calculation
   - 支持批量格式转换 | Supports batch format conversion
-  - 别名 | Alias: `ma`
   - 提供终端文件统计与进度显示 | Provides statics on files & progress bar in terminal
+  - 别名 | Alias: `ma`
+- `Edit-PicturesParallel`: Edit-Pictures 的多线程并行版本 | Parallel version of Edit-Pictures
+  - 具备相同功能 | Same features as Edit-Pictures
+  - 支持多线程处理 | Supports multi-threaded processing
+  - 别名 | Alias: `map`
+
+> ❕ 注意 Note
+> 
+> - 这两个函数默认使用当前工作目录，暂不提供指定操作目录的功能。
+> - These two functions default to the current working directory, and do not provide the option to specify it.
 
 ### 视频处理 | Video Processing
 - `Convert-Videos`: 使用 FFMPEG 进行视频转码 | Video transcoding using FFMPEG
   - 启用 NVIDIA GPU 加速 | Enables NVIDIA GPU acceleration
   - 使用 HEVC/H.265 编码 | Uses HEVC/H.265 encoding
   - 支持高质量预设和2-pass编码 | Supports high-quality preset and 2-pass encoding
+
+> ❕ 注意 Note
+> 
+> - 默认不提供修改编码器和关闭硬件加速功能。
+> - The default does not provide options to change the encoder or disable hardware acceleration.
 
 ### 虚拟机管理 | VM Management
 - `Get-VMIPAddress`: 获取指定虚拟机的 IP 地址 | Get IP address of specified VM
@@ -137,8 +151,8 @@ Edit-Pictures -all -ppi 144
 # 将 JPG 转换为 PNG（保持原始 PPI） | Convert JPG to PNG (retain original PPI)
 Edit-Pictures -trans -no_ppi
 
-# 使用别名处理单个格式 | Use alias to process single format
-ma -jpg -ppi 300
+# 使用别名调用多线程功能处理单个格式 | Use alias to process single format parallelly
+map -jpg -ppi 300
 ```
 
 ### 视频转码 | Video Transcoding
@@ -181,6 +195,7 @@ Set-WindowsFeatureState -FeatureId 41415841
 
 | Date | 更新 | Updates |
 | ---- | ---- | ------- |
+| 25-05-20 | 添加 ImageProcessingTask 类和 Edit-Pictures 函数的多线程并行版本 | The Parallel version of ImageProcessingTask class and  Edit-Pictures function have been added |
 | 25-05-12 | 更新 ImageProcessingTask 类，更改 Edit-Pictures 函数的错误处理方法 | ImageProcessingTask class has been updated, and Edit-Pictures function's error handling method has been changed |
 | 25-05-11 | 添加 Test-AdminPrivilege 函数，修正几个函数的 Write-Verbose 信息 | Test-AdminPrivilege function has been added, and Write-Verbose information of some functions has been fixed |
 | 25-05-08 | 添加 IPMonitor 类和几个辅助类，重构 Show-IPAddress 和 Test-IPChange 函数以使用这些类，移除不再需要的函数 | IPMonitor class and some helper classes have been added, and Show-IPAddress & Test-IPChange have been refactored with the classes |

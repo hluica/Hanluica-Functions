@@ -103,27 +103,27 @@ class IPMonitor {
         Get-NetAdapter | ForEach-Object {
             $adapterMap[$_.InterfaceIndex] = $_.Name
         }
-
+    
         # Get the list of IP addresses
         $validIPs = Get-NetIPAddress | Where-Object {
-            $_.AddressFamily -in ('IPv4', 'IPv6') -and
+            $_.AddressFamily -in ('IPv4', 'IPv6') -and 
             $_.IPAddress -notmatch '^(fe80|::1|127\.)'
         }
-
+    
         # Map IP addresses to their respective interfaces, leave unknowns as "<Unknown Interface>"
         $ipDetails = $validIPs | ForEach-Object {
             $interfaceName = $adapterMap[$_.InterfaceIndex] ?? "<Unknown Interface>"
             [IPAddressDetail]::new($interfaceName, $_.IPAddress)
         }
-
+    
         return $ipDetails
     }
 
     hidden [IPAddressDetail[]] ConvertToIPDetails($ipInfoArray) {
         return (
             $ipInfoArray |
-            ForEach-Object {
-                [IPAddressDetail]::new($_.Interface, $_.IPAddress)
+            ForEach-Object { 
+                [IPAddressDetail]::new($_.Interface, $_.IPAddress) 
             }
         )
     }
@@ -136,13 +136,13 @@ class IPMonitor {
                     IPAddress = $ip.IPAddress
                 }
             }
-
+    
             @{
                 TimeStamp = $record.TimeStamp
                 IPInfo = $serializedIPInfo
             }
         }
-
+    
         return $serializedRecords
     }
 
@@ -150,7 +150,7 @@ class IPMonitor {
         if (-not (Test-Path $this.LogFile)) { # Unable to get log file. Assuming empty history.
             return @()
         }
-
+    
         try {
             $logData = Get-Content $this.LogFile -Raw | ConvertFrom-Json
             # Empty history case
@@ -179,7 +179,7 @@ class IPMonitor {
 
     hidden [void] WriteLogHistory([IPLogRecord[]]$LogHistory) {
         $serializableHistory = $this.ConvertToSerializableHistory($LogHistory)
-
+    
         try {
             ConvertTo-Json -InputObject $serializableHistory -Depth 10 |
             Set-Content -Path $this.LogFile -Encoding UTF8
@@ -235,12 +235,12 @@ class IPMonitor {
                 (Get-Date).ToString("yyyy-MM-dd HH:mm:ss"),
                 $CurrentIPInfo
             )
-
+            
             $updatedLogHistory = @($newEntry) + $logHistory
             if ($updatedLogHistory.Count -gt $this.MaxLogEntries) {
                 $updatedLogHistory = $updatedLogHistory | Select-Object -First $this.MaxLogEntries
             }
-
+            
             try {
                 $this.WriteLogHistory($updatedLogHistory)
                 return $true
@@ -267,11 +267,11 @@ class IPMonitor {
             $latestLog = $logHistory[0]
             $logTime = [DateTime]::ParseExact($latestLog.TimeStamp, "yyyy-MM-dd HH:mm:ss", $null)
             $timeDiff = (Get-Date) - $logTime
-
+            
             Write-Host "`n===================== Time Information =====================`n" -ForegroundColor Green
             Write-Host "Record Time: $($latestLog.TimeStamp)" -ForegroundColor Yellow
             Write-Host "Time Since : $([math]::Floor($timeDiff.TotalHours)) h $($timeDiff.Minutes) min" -ForegroundColor Yellow
-
+            
             Write-Host "`n================== Network Interface Info ==================" -ForegroundColor Green
             $this.FormatIPInfoForDisplay($latestLog.IPInfo)
             Write-Host "============================================================" -ForegroundColor Green
@@ -300,7 +300,7 @@ class IPMonitor {
             }
 
             $isChanged = $this.UpdateIPLog($currentSystemIPs)
-
+            
             if ($ShowChange -and -not $Silent) {
                 if ($isChanged) {
                     Write-Host "`nIP Address Updated!" -ForegroundColor Magenta

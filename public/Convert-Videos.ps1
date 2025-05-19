@@ -37,14 +37,14 @@ function Convert-Videos {
         [Parameter(Mandatory)]
         [ValidateRange(1, 100)]
         [int]$BitRate,
-
+        
         [Parameter()]
         [string]$SourcePath = ".",
-
+        
         [Parameter()]
         [string]$DestinationPath = ".."
     )
-
+    
     # Validate paths
     # Validate SourcePath
     try {
@@ -61,7 +61,7 @@ function Convert-Videos {
         return
     }
     $DestinationPath = $resolvedDestPath
-
+    
     # Validate ffmpeg
     $ffmpegPath = $null
     try {
@@ -85,36 +85,36 @@ function Convert-Videos {
         Write-Warning "No video files found in path: ${SourcePath}"
         return
     }
-
+    
     # Calculate encoding parameters
     $maxRate = $BitRate * 1.5
     $bufSize = $BitRate * 2
-
+    
     # Start Process
     Write-Host "🔍 Found $($videos.Count) video files, starting processing..." -ForegroundColor Blue
     Write-Host "❗ Warning: Converting to MP4 may remove subtitles and embedded sources.`n" -ForegroundColor Yellow
     $count = 0
     foreach ($video in $videos) {
         $outputPath = Join-Path -Path "${DestinationPath}" -ChildPath "$([System.IO.Path]::GetFileNameWithoutExtension($video.Name)).mp4"
-
+        
         $ffmpegArgs = @(
-            "-y"                                  # Overwrite output files
-            "-i",            "$($video.FullName)" # Input file
-            "-c:v",          "hevc_nvenc"         # Use NVENC H.265 encoder
-            "-preset",       "p5"                 # Encoding preset: Slow
-            "-tune",         "hq"                 # Tuning: High quality
-            "-rc",           "vbr"                # Rate control: Variable bitrate
-            "-b:v",          "${BitRate}M"        # Average bitrate
-            "-maxrate",      "${maxRate}M"        # Maximum bitrate
-            "-bufsize",      "${bufSize}M"        # Buffer size
-            "-multipass",    "2"                  # Two-pass encoding: Full frame
-            "-rc-lookahead", "32"                 # Look-ahead frames: 32
-            "-spatial-aq",   "1"                  # Spatial adaptive quantization: On
-            "-temporal-aq",  "1"                  # Temporal adaptive quantization: On
-            "-c:a",          "copy"               # Audio stream: Direct copy
-            "${outputPath}"                       # Output file
+            "-y"                           # Overwrite output files
+            "-i", "$($video.FullName)"     # Input file
+            "-c:v", "hevc_nvenc"           # Use NVENC H.265 encoder
+            "-preset", "p5"                # Encoding preset: Slow
+            "-tune", "hq"                  # Tuning: High quality
+            "-rc", "vbr"                   # Rate control: Variable bitrate
+            "-b:v", "${BitRate}M"          # Average bitrate
+            "-maxrate", "${maxRate}M"      # Maximum bitrate
+            "-bufsize", "${bufSize}M"      # Buffer size
+            "-multipass", "2"              # Two-pass encoding: Full frame
+            "-rc-lookahead", "32"          # Look-ahead frames: 32
+            "-spatial-aq", "1"             # Spatial adaptive quantization: On
+            "-temporal-aq", "1"            # Temporal adaptive quantization: On
+            "-c:a", "copy"                 # Audio stream: Direct copy
+            "${outputPath}"                # Output file
         )
-
+        
         & $ffmpegPath $ffmpegArgs
 
         $count++

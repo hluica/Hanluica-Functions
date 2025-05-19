@@ -44,14 +44,14 @@ function Copy-Directory {
 
         # Get all subdirectories
         $SourceDirs = Get-ChildItem -Path $Path -Recurse -Directory
-
+    
         # Create directory structure
         foreach ($dir in $SourceDirs) {
             $DestinationDir = $dir.FullName.Replace($Path, $Destination)
             Resolve-OrCreateDirectory -Path $DestinationDir | Out-Null
             Write-Verbose "[$($MyInvocation.MyCommand.Name)] Created directory: $DestinationDir"
         }
-
+    
         Write-Verbose "[$($MyInvocation.MyCommand.Name)] Directory structure copied successfully"
     }
     catch {
