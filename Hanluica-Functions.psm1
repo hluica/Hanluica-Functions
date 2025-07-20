@@ -6,6 +6,9 @@
 # The function for truncating strings.
 . "${PSScriptRoot}\public\Limit-StringLength.ps1"
 
+# The function for getting target paths of shortcuts and symbolic links.
+. "${PSScriptRoot}\public\Get-LinkTarget.ps1"
+
 # The function for file system operations.
 . "${PSScriptRoot}\public\Resolve-OrCreateDirectory.ps1"
 . "${PSScriptRoot}\public\Copy-Directory.ps1"

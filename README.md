@@ -56,6 +56,18 @@ This module includes the following main features:
   - Supports pipeline input
   - Provides detailed operation logging & error handling
 
+- `Get-LinkTarget`: 解析快捷方式、符号链接等文件的目标路径
+  - 支持 .lnk、.url 文件和符号链接
+  - 使用 Windows API Code Pack 解析快捷方式
+  - 支持管道输入
+  - 自动扫描当前目录（无参数时）
+
+  Parses target paths of shortcuts, symbolic links, and similar files
+  - Supports .lnk, .url files and symbolic links
+  - Uses Windows API Code Pack for shortcut parsing
+  - Supports pipeline input
+  - Auto-scans current directory (when no parameters)
+
 ### 图像处理 | Image Processing
 - `Edit-Pictures`: 批量处理图片文件 | Batch process image files
   - 支持设置 JPG/PNG 的 PPI | Supports setting PPI for JPG/PNG
@@ -64,7 +76,7 @@ This module includes the following main features:
   - 支持批量格式转换 | Supports batch format conversion
   - 提供终端文件统计与进度显示 | Provides statics on files & progress bar in terminal
   - 别名 | Alias: `ma`
-- `Edit-PicturesParallel`: Edit-Pictures 的多线程并行版本 | Parallel version of Edit-Pictures
+- `Edit-PicturesParallel`: Edit-Pictures 的多线程并行版本 | Parallel & multi-threaded version of Edit-Pictures
   - 具备相同功能 | Same features as Edit-Pictures
   - 支持多线程处理 | Supports multi-threaded processing
   - 别名 | Alias: `map`
@@ -103,9 +115,11 @@ This module includes the following main features:
 - PowerShell 7.0 或更高版本 | PowerShell 7.0 or higher
 - 部分功能仅限于 Windows 操作系统 | Some features are Windows-only
 - 部分功能需要管理员权限 | Some features require administrator privileges
-- 视频转码功能需要 FFMPEG 且需要 NVIDIA 显卡支持 | Video transcoding requires FFMPEG and NVIDIA GPU support
-- 图像处理功能需要 ImageSharpProcessorLib 库支持（已包含在模块中，或者参见[Github主页](https://github.com/hluica/ImageSharpProcessorLib)）| Image processing requires ImageSharpProcessorLib (included in the module; or visit the [Homepage](https://github.com/hluica/ImageSharpProcessorLib))
+- Get-LinkTarget 函数需要 Windows API Code Pack Shell 库支持（已包含在模块中）| Get-LinkTarget function requires Windows API Code Pack Shell library (included in the module)
+- Convert-Videos 函数需要 FFMPEG 且需要 NVIDIA 显卡支持 | Video transcoding requires FFMPEG and NVIDIA GPU support
+- Edit-Pictures Edit-PicturesParallel 函数需要 ImageSharpProcessorLib 库支持（已包含在模块中，或者参见[Github主页](https://github.com/hluica/ImageSharpProcessorLib)）| Image processing requires ImageSharpProcessorLib (included in the module; or visit the [Homepage](https://github.com/hluica/ImageSharpProcessorLib))
   - 该库由 .NET 9 生成并依赖于 SixLabors.ImageSharp，故需要 .NET 9 运行时。依赖库则已包含在模块中 | The ImageSharpProcessorLib is built with .NET 9, and dependent on SixLabors.ImageSharp (included in the module)
+- Set-WindowsFeatureState 函数需要 ViveTool 支持（**未包含***在模块中）| Set-WindowsFeatureState function requires ViveTool (**not included** in the module)
 
 ## 安装 | Installation
 
@@ -134,6 +148,18 @@ cpdir -Path "C:\SourceFolder" -Destination "D:\DestFolder"
 ```powershell
 # 获取 '..\New_Folder' 的完全限定路径，然后生成它（如果原本不存在） | Get fully qualified path of '..\New_Folder' , then create the folder if it doesn't exist.
 Resolve-OrCreateDirectory -Path '..\New_Folder'
+```
+
+### 解析链接目标 | Parse Link Targets
+```powershell
+# 解析当前目录中的所有链接文件 | Parse all link files in current directory
+Get-LinkTarget
+
+# 解析指定的快捷方式文件 | Parse specific shortcut file
+Get-LinkTarget -Path "C:\Users\Public\Desktop\App.lnk"
+
+# 通过管道处理多个链接 | Process multiple links via pipeline
+Get-ChildItem "C:\Links" | Get-LinkTarget
 ```
 
 ### 字符串处理 | String Truncation
@@ -195,6 +221,7 @@ Set-WindowsFeatureState -FeatureId 41415841
 
 | Date | 更新 | Updates |
 | ---- | ---- | ------- |
+| 25-07-21 | 添加 Get-LinkTarget 函数用于解析快捷方式和符号链接。支持 Windows API Code Pack 和 WScript方案 | Added Get-LinkTarget function for parsing shortcuts and symbolic links. Supports Windows API Code Pack and WScript. |
 | 25-05-20 | 添加 ImageProcessingTask 类和 Edit-Pictures 函数的多线程并行版本 | The Parallel version of ImageProcessingTask class and  Edit-Pictures function have been added |
 | 25-05-12 | 更新 ImageProcessingTask 类，更改 Edit-Pictures 函数的错误处理方法 | ImageProcessingTask class has been updated, and Edit-Pictures function's error handling method has been changed |
 | 25-05-11 | 添加 Test-AdminPrivilege 函数，修正几个函数的 Write-Verbose 信息 | Test-AdminPrivilege function has been added, and Write-Verbose information of some functions has been fixed |

@@ -12,7 +12,7 @@
 RootModule = 'Hanluica-Functions.psm1'
 
 # Version number of this module.
-ModuleVersion = '12.0.0'
+ModuleVersion = '13.0.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -56,6 +56,7 @@ PowerShellHostVersion = '7.0'
 # Assemblies that must be loaded prior to importing this module
 RequiredAssemblies = @(
     '.\bin\ImageSharpProcessorLib.dll'
+    '.\bin\Microsoft.WindowsAPICodePack.Shell.dll'
 )
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
@@ -74,6 +75,7 @@ RequiredAssemblies = @(
 FunctionsToExport = @(
     "Test-AdminPrivilege",
     "Limit-StringLength",
+    "Get-LinkTarget",
     "Resolve-OrCreateDirectory",
     "Copy-Directory",
     "Move-SubdirFiles",
