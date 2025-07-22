@@ -32,6 +32,8 @@ Skip PPI setting.
 - For -jpg, -png, -all: If specified with these, it means preserve original PPI instead of setting a new one.
 .PARAMETER ppi
 Specifies the target PPI value. Default is 144. Must be greater than 0. Ignored if -linear or -no_ppi (for relevant operations) is used.
+.PARAMETER scan
+Scan image files without processing them. Outputs the count of found JPG, PNG, and WEBP files.
 .EXAMPLE
 Edit-Pictures -jpg -ppi 300
 Sets the PPI of all JPG files in the current directory and subdirectories to 300.
@@ -64,8 +66,14 @@ function Edit-Pictures {
         [switch]$linear,
         [Parameter(ParameterSetName = 'BatchProcess')]
         [switch]$trans,
-        [switch]$no_ppi, 
-        [int]$ppi = 144
+        [Parameter(ParameterSetName = 'SingleFormat')]
+        [Parameter(ParameterSetName = 'BatchProcess')]
+        [switch]$no_ppi,
+        [Parameter(ParameterSetName = 'SingleFormat')]
+        [Parameter(ParameterSetName = 'BatchProcess')]
+        [int]$ppi = 144,
+        [Parameter(ParameterSetName = 'Scan')]
+        [switch]$scan
     )
 
     if ($ppi -le 0 -and !$linear -and !$no_ppi) {
@@ -79,8 +87,10 @@ function Edit-Pictures {
     [FileInfo[]]$webpfiles = Get-ChildItem -Path . -Recurse -File -Include *.webp
     Write-Host "Found $($jpgfiles.Count) JPG, $($pngfiles.Count) PNG, $($webpfiles.Count) WEBP files." -ForegroundColor Yellow
 
+    if ($scan) { return }
+
     $overallStopwatch  = [Stopwatch]::StartNew()
-    $tasksToRun        = [List[ImageProcessingTask]]::new()
+    $tasksToRun        = [List[BaseImageProcessingTask]]::new()
     $progressIdCounter = 0
 
     # This flag is for the C# ProcessImage's 'no_ppi' parameter.
@@ -98,7 +108,7 @@ function Edit-Pictures {
                     PpiValue            = $ppi
                 }
                 $activityLabel = "Processing JPGs (PPI: $($config.UseLinearPpi ? 'Linear' : ($config.PreserveOriginalPpi ? 'Original' : $config.PpiValue)))"
-                $tasksToRun.Add([ImageProcessingTask]::new($jpgfiles, $activityLabel, $config, $progressIdCounter++))
+                $tasksToRun.Add([BaseImageProcessingTask]::Create($jpgfiles, $activityLabel, $config, $progressIdCounter++))
             }
             if ($png) {
                 $config = @{
@@ -108,7 +118,7 @@ function Edit-Pictures {
                     PpiValue            = $ppi
                 }
                 $activityLabel = "Processing PNGs (PPI: $($config.UseLinearPpi ? 'Linear' : ($config.PreserveOriginalPpi ? 'Original' : $config.PpiValue)))"
-                $tasksToRun.Add([ImageProcessingTask]::new($pngfiles, $activityLabel, $config, $progressIdCounter++))
+                $tasksToRun.Add([BaseImageProcessingTask]::Create($pngfiles, $activityLabel, $config, $progressIdCounter++))
             }
             if ($webp) {
                 $config = @{
@@ -117,7 +127,7 @@ function Edit-Pictures {
                     PreserveOriginalPpi = $true  # WebP to PNG conversion should preserve PPI by default
                     PpiValue            = $ppi   # Passed but ignored by C# if PreserveOriginalPpi is true
                 }
-                $tasksToRun.Add([ImageProcessingTask]::new($webpfiles, "Converting WEBP to PNG (PPI preserved)", $config, $progressIdCounter++))
+                $tasksToRun.Add([BaseImageProcessingTask]::Create($webpfiles, "Converting WEBP to PNG (PPI preserved)", $config, $progressIdCounter++))
             }
         }
         'BatchProcess' {
@@ -129,7 +139,7 @@ function Edit-Pictures {
                     PpiValue            = $ppi
                 }
                 $jpgActivity = "Processing JPGs (PPI: $($jpgConfig.UseLinearPpi ? 'Linear' : ($jpgConfig.PreserveOriginalPpi ? 'Original' : $jpgConfig.PpiValue)))"
-                $tasksToRun.Add([ImageProcessingTask]::new($jpgfiles, $jpgActivity, $jpgConfig, $progressIdCounter++))
+                $tasksToRun.Add([BaseImageProcessingTask]::Create($jpgfiles, $jpgActivity, $jpgConfig, $progressIdCounter++))
 
                 $pngConfig = @{
                     ConvertToPng        = $false
@@ -138,7 +148,7 @@ function Edit-Pictures {
                     PpiValue            = $ppi
                 }
                 $pngActivity = "Processing PNGs (PPI: $($pngConfig.UseLinearPpi ? 'Linear' : ($pngConfig.PreserveOriginalPpi ? 'Original' : $pngConfig.PpiValue)))"
-                $tasksToRun.Add([ImageProcessingTask]::new($pngfiles, $pngActivity, $pngConfig, $progressIdCounter++))
+                $tasksToRun.Add([BaseImageProcessingTask]::Create($pngfiles, $pngActivity, $pngConfig, $progressIdCounter++))
             }
             if ($linear -and !$all) { # If -all is present, linear logic is already incorporated above.
                 $allImageFiles = @($jpgfiles + $pngfiles | Where-Object { $_ -is [FileInfo] })
@@ -148,7 +158,7 @@ function Edit-Pictures {
                     PreserveOriginalPpi = $false # When linear is true, C# ignores this
                     PpiValue            = $ppi   # When linear is true, C# ignores this
                 }
-                $tasksToRun.Add([ImageProcessingTask]::new($allImageFiles, "Processing JPG/PNG (PPI: Linear)", $config, $progressIdCounter++))
+                $tasksToRun.Add([BaseImageProcessingTask]::Create($allImageFiles, "Processing JPG/PNG (PPI: Linear)", $config, $progressIdCounter++))
             }
             if ($trans) {
                 # 1. Process existing PNG files (set PPI unless -no_ppi for this step)
@@ -159,7 +169,7 @@ function Edit-Pictures {
                         PreserveOriginalPpi = $false # We want to set PPI
                         PpiValue            = $ppi
                     }
-                    $tasksToRun.Add([ImageProcessingTask]::new($pngfiles, "Setting PPI for existing PNGs to $ppi", $pngTransConfig, $progressIdCounter++))
+                    $tasksToRun.Add([BaseImageProcessingTask]::Create($pngfiles, "Setting PPI for existing PNGs to $ppi", $pngTransConfig, $progressIdCounter++))
                 } else {
                     Write-Host "Skipping PPI setting for existing PNG files (due to -no_ppi with -trans)." -ForegroundColor Yellow
                 }
@@ -172,7 +182,7 @@ function Edit-Pictures {
                     PpiValue            = $ppi
                 }
                 $jpgToPngActivity = if ($jpgToPngConfig.PreserveOriginalPpi) { "Converting JPG to PNG (PPI preserved)" } else { "Converting JPG to PNG (PPI: $($jpgToPngConfig.PpiValue))" }
-                $tasksToRun.Add([ImageProcessingTask]::new($jpgfiles, $jpgToPngActivity, $jpgToPngConfig, $progressIdCounter++))
+                $tasksToRun.Add([BaseImageProcessingTask]::Create($jpgfiles, $jpgToPngActivity, $jpgToPngConfig, $progressIdCounter++))
             }
         }
     }
@@ -205,11 +215,10 @@ function Edit-Pictures {
     } elseif ($anyTaskExecuted) {
         Write-Host "All image processing tasks complete." -ForegroundColor Green
     } elseif ($tasksToRun.Count -gt 0 -and -not $anyTaskExecuted) {
-        Write-Host "Image processing tasks were configured, but no files were processed (e.g., no matching files found)." -ForegroundColor Grey
+        Write-Host "Image processing tasks were configured, but no files were processed (e.g., no matching files found)." -ForegroundColor Gray
     }
 
     if ($Error) { $Error.Clear() }
-    if ($Global:Error) { $Global:Error.Clear() }
 }
 
 Set-Alias -Name ma -Value Edit-Pictures

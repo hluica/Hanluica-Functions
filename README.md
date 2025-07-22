@@ -75,16 +75,18 @@ This module includes the following main features:
   - 支持线性 PPI 计算 | Supports linear PPI calculation
   - 支持批量格式转换 | Supports batch format conversion
   - 提供终端文件统计与进度显示 | Provides statics on files & progress bar in terminal
+  - 支持单线程与多线程双模式，自动根据文件数量切换 | Supports both single-threaded/sequential and multi-threaded/parallel modes, automatically switching based on file count
   - 别名 | Alias: `ma`
-- `Edit-PicturesParallel`: Edit-Pictures 的多线程并行版本 | Parallel & multi-threaded version of Edit-Pictures
-  - 具备相同功能 | Same features as Edit-Pictures
-  - 支持多线程处理 | Supports multi-threaded processing
-  - 别名 | Alias: `map`
 
 > ❕ 注意 Note
 > 
-> - 这两个函数默认使用当前工作目录，暂不提供指定操作目录的功能。
-> - These two functions default to the current working directory, and do not provide the option to specify it.
+> - 此函数默认使用当前工作目录，暂不提供指定操作目录的功能。
+>
+>   This function defaults to the current working directory, and does not provide the option to specify it.
+>
+> - 此函数不支持手动调节单/多线程模式，只能根据待处理文件数量自动切换。
+>
+>   This function does not support manual switching between single-threaded and multi-threaded modes, it automatically switches based on the number of files to process.
 
 ### 视频处理 | Video Processing
 - `Convert-Videos`: 使用 FFMPEG 进行视频转码 | Video transcoding using FFMPEG
@@ -95,7 +97,8 @@ This module includes the following main features:
 > ❕ 注意 Note
 > 
 > - 默认不提供修改编码器和关闭硬件加速功能。
-> - The default does not provide options to change the encoder or disable hardware acceleration.
+> 
+>   The default does not provide options to change the encoder or disable hardware acceleration.
 
 ### 虚拟机管理 | VM Management
 - `Get-VMIPAddress`: 获取指定虚拟机的 IP 地址 | Get IP address of specified VM
@@ -119,7 +122,7 @@ This module includes the following main features:
 - Convert-Videos 函数需要 FFMPEG 且需要 NVIDIA 显卡支持 | Video transcoding requires FFMPEG and NVIDIA GPU support
 - Edit-Pictures Edit-PicturesParallel 函数需要 ImageSharpProcessorLib 库支持（已包含在模块中，或者参见[Github主页](https://github.com/hluica/ImageSharpProcessorLib)）| Image processing requires ImageSharpProcessorLib (included in the module; or visit the [Homepage](https://github.com/hluica/ImageSharpProcessorLib))
   - 该库由 .NET 9 生成并依赖于 SixLabors.ImageSharp，故需要 .NET 9 运行时。依赖库则已包含在模块中 | The ImageSharpProcessorLib is built with .NET 9, and dependent on SixLabors.ImageSharp (included in the module)
-- Set-WindowsFeatureState 函数需要 ViveTool 支持（**未包含***在模块中）| Set-WindowsFeatureState function requires ViveTool (**not included** in the module)
+- Set-WindowsFeatureState 函数需要 ViveTool 支持（**未包含**在模块中）| Set-WindowsFeatureState function requires ViveTool (**not included** in the module)
 
 ## 安装 | Installation
 
@@ -176,9 +179,6 @@ Edit-Pictures -all -ppi 144
 
 # 将 JPG 转换为 PNG（保持原始 PPI） | Convert JPG to PNG (retain original PPI)
 Edit-Pictures -trans -no_ppi
-
-# 使用别名调用多线程功能处理单个格式 | Use alias to process single format parallelly
-map -jpg -ppi 300
 ```
 
 ### 视频转码 | Video Transcoding
@@ -221,6 +221,7 @@ Set-WindowsFeatureState -FeatureId 41415841
 
 | Date | 更新 | Updates |
 | ---- | ---- | ------- |
+| 25-07-23 | 重写 Edit-Pictures 函数和 ImageProcessingTask 类，整合单线程和多线程功能并支持自动切换；弃用 Edit-PicturesParallel 函数 | Rewrote Edit-Pictures function and ImageProcessingTask class, integrating single-threaded and multi-threaded functionality with automatic switching; deprecated Edit-PicturesParallel function |
 | 25-07-21 | 添加 Get-LinkTarget 函数用于解析快捷方式和符号链接。支持 Windows API Code Pack 和 WScript方案 | Added Get-LinkTarget function for parsing shortcuts and symbolic links. Supports Windows API Code Pack and WScript. |
 | 25-05-20 | 添加 ImageProcessingTask 类和 Edit-Pictures 函数的多线程并行版本 | The Parallel version of ImageProcessingTask class and  Edit-Pictures function have been added |
 | 25-05-12 | 更新 ImageProcessingTask 类，更改 Edit-Pictures 函数的错误处理方法 | ImageProcessingTask class has been updated, and Edit-Pictures function's error handling method has been changed |

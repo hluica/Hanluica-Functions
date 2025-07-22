@@ -66,7 +66,9 @@ RequiredAssemblies = @(
 # TypesToProcess = @()
 
 # Format files (.ps1xml) to be loaded when importing this module
-# FormatsToProcess = @()
+FormatsToProcess = @(
+    '.\formats\Get-LinkTarget.format.ps1xml'
+)
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
 # NestedModules = @()
@@ -81,7 +83,6 @@ FunctionsToExport = @(
     "Move-SubdirFiles",
     "Convert-Videos",
     "Edit-Pictures",
-    "Edit-PicturesParallel",
     "Show-LatestIPLog",
     "Test-IPChange",
     "Get-VMIPAddress",
@@ -100,7 +101,6 @@ VariablesToExport = '*'
 AliasesToExport = @(
     "cpdir",
     "ma",
-    "map",
     "flatmv"
 )
 

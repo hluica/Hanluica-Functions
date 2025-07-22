@@ -149,10 +149,12 @@ function Get-LinkTarget {
             }
 
             # Create and output result object
-            [PSCustomObject]@{
+            $result = [PSCustomObject]@{
                 LinkFile = $file
                 Target   = if ($errorMessage) { $errorMessage } else { $targetPath }
             }
+            $result.PSObject.TypeNames.Insert(0, 'LinkTarget')
+            $result
         }
     }
 

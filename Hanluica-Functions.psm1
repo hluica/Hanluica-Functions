@@ -18,14 +18,11 @@
 . "${PSScriptRoot}\public\Convert-Videos.ps1"
 
 # The functions for image processing.
-# Common helper function.
+# Helper function.
 . "${PSScriptRoot}\private\Format-TimeSpan.ps1"
-# Normal version.
+# Main processing function.
 . "${PSScriptRoot}\class\ImageProcessingTask.ps1"
 . "${PSScriptRoot}\public\Edit-Pictures.ps1"
-# Parallel version.
-. "${PSScriptRoot}\class\ParallelImageProcessingTask.ps1"
-. "${PSScriptRoot}\public\Edit-PicturesParallel.ps1"
 
 # The functions for testing and logging IP changes.
 . "${PSScriptRoot}\class\IPMonitor.ps1"
